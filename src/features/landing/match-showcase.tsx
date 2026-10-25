@@ -22,13 +22,13 @@ export function MatchShowcase() {
 
   return (
     <section id="dopasowanie" className="mx-auto max-w-6xl px-5 py-20">
-      <div className="bg-forest text-forest-foreground relative grid items-center gap-12 overflow-hidden rounded-[2.5rem] p-8 sm:p-12 lg:grid-cols-2 lg:p-16">
+      <div className="bg-forest text-forest-foreground relative grid grid-cols-1 items-center gap-8 overflow-hidden rounded-[2.5rem] p-6 sm:gap-12 sm:p-12 lg:grid-cols-2 lg:p-16">
         <span
           aria-hidden
           className="bg-sun/15 absolute -top-24 -left-24 size-72 rounded-full"
         />
 
-        <div className="relative">
+        <div className="relative min-w-0">
           <p className="text-sun text-sm font-semibold tracking-widest uppercase">
             Dopasowanie
           </p>
@@ -63,11 +63,11 @@ export function MatchShowcase() {
           </a>
         </div>
 
-        <div className="relative lg:rotate-[1.5deg]">
-          <div className="bg-card text-card-foreground rounded-3xl p-6 shadow-2xl sm:p-7">
-            <div className="flex items-center gap-4">
+        <div className="relative min-w-0 lg:rotate-[1.5deg]">
+          <div className="bg-card text-card-foreground min-w-0 rounded-3xl p-5 shadow-2xl sm:p-7">
+            <div className="flex items-center gap-3 sm:gap-4">
               <div
-                className="size-16 shrink-0 overflow-hidden rounded-2xl"
+                className="size-12 shrink-0 overflow-hidden rounded-2xl sm:size-16"
                 style={{ backgroundColor: dog.tile }}
               >
                 <AnimalArt
@@ -86,13 +86,13 @@ export function MatchShowcase() {
               <div
                 role="img"
                 aria-label="Dopasowanie: 92 procent"
-                className="grid size-16 shrink-0 place-items-center rounded-full"
+                className="grid size-14 shrink-0 place-items-center rounded-full sm:size-16"
                 style={{
                   background:
                     "conic-gradient(var(--primary) 0 92%, var(--border) 92% 100%)",
                 }}
               >
-                <span className="bg-card font-heading grid size-12 place-items-center rounded-full text-lg font-semibold">
+                <span className="bg-card font-heading grid size-10 place-items-center rounded-full text-base font-semibold sm:size-12 sm:text-lg">
                   92%
                 </span>
               </div>
@@ -102,7 +102,7 @@ export function MatchShowcase() {
               Dopasowanie wysokie, ponieważ…
             </p>
 
-            <ul className="mt-4 space-y-3">
+            <ul className="mt-4 space-y-2.5 sm:space-y-3">
               {REASONS.map((r) => (
                 <li key={r.text} className="flex gap-3 text-sm leading-snug">
                   <span
