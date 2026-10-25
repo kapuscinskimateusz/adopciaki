@@ -5,27 +5,28 @@ Sekcje „Plan” opisują zamierzony stan. Sekcja [Status realizacji](#status-r
 
 ## Status realizacji
 
-Stan na koniec etapu 0 (zmiany jeszcze nie zacommitowane).
+Stan na przygotowanie przejścia do etapu 1.
 
-| Etap         | Status                                 |
-| ------------ | -------------------------------------- |
-| 0. Fundament | Wykonany lokalnie, z wyjątkami poniżej |
-| 1–9          | Nie rozpoczęte                         |
+| Etap         | Status                                           |
+| ------------ | ------------------------------------------------ |
+| 0. Fundament | Gotowy; połączenie z Supabase Cloud potwierdzone |
+| 1–9          | Nie rozpoczęte                                   |
 
-### Etap 0 — zweryfikowane lokalnie
+### Etap 0 — wykonane i zweryfikowane
 
-- `npm run format:check`, `lint`, `typecheck`, `test` (1 test smoke) i `build` przechodzą.
-- Aplikacja startuje bez konfiguracji Supabase; `GET /api/health` zwraca `{"app":"ok","supabase":"not_configured"}`.
-- Niepoprawny `NEXT_PUBLIC_SUPABASE_URL` powoduje czytelny błąd walidacji Zod (odpowiedź 500); puste wartości są traktowane jak brak wartości.
-- `.env.local` jest ignorowany przez Git, `.env.example` nie; w `.next/static` nie ma `service_role`.
-- Nagłówki bezpieczeństwa są ustawione (m.in. `X-Frame-Options`, HSTS), `X-Powered-By` wyłączony.
-- Obecne: struktura katalogów, README, ADR-0001, AGENTS.md.
+- Projekt Supabase Cloud został utworzony, a lokalna konfiguracja CLI została zainicjalizowana i połączona z projektem.
+- `.env.local` zawiera wyłącznie publiczny URL i klucz publishable; plik jest ignorowany przez Git. Klucz `service_role` nie jest ustawiony ani potrzebny na tym etapie.
+- `GET /api/health` zwraca `{"app":"ok","supabase":"ok"}` przy lokalnej konfiguracji; osobne, tylko do odczytu żądanie do Supabase Auth z kluczem publishable zwróciło HTTP 200.
+- W `supabase/config.toml` automatyczne wystawianie nowych tabel przez lokalne Data API jest wyłączone. To ustawienie nie zmienia konfiguracji Supabase Cloud.
+- Tryb bez konfiguracji Supabase, walidacja Zod, nagłówki bezpieczeństwa i wyłączenie `X-Powered-By` pozostają obsługiwane.
+- `.env.example`, README, ADR-0001, AGENTS.md, plan, struktura aplikacji i workflow CI są obecne.
+- Supabase nie ma jeszcze schematu aplikacji ani migracji; to będzie początek etapu 1.
 
-### Etap 0 — nie wykonane lub niezweryfikowane
+### Do wykonania później — nie blokuje etapu 1
 
-- **Supabase Cloud nie jest skonfigurowany.** Projekt nie został założony, `.env.local` nie istnieje, połączenie nie zostało potwierdzone (zweryfikowano tylko tryb `not_configured`).
-- **`supabase init` i `supabase link` nie zostały wykonane**, więc `supabase/config.toml` nie istnieje. Ustawienia Auth (Site URL, adresy przekierowań) nie zostały skonfigurowane.
-- **CI (GitHub Actions) nie zostało zweryfikowane.** Workflow `.github/workflows/ci.yml` istnieje, ale repozytorium nie ma zdalnego remote'a. Te same kroki przeszły lokalnie.
+- **Przed wdrożeniem pierwszej migracji:** sprawdzić w Supabase Dashboard ustawienia Data API i automatycznego wystawiania nowych tabel; konfiguracja CLI dotyczy lokalnego środowiska.
+- **Supabase Auth:** Site URL, dozwolone adresy przekierowań i potwierdzenie e-maila trzeba sprawdzić/skonfigurować w Dashboardzie przed etapem 2 (Auth). Nie są wymagane do tworzenia schematu w etapie 1.
+- **GitHub Actions:** workflow jest przygotowany; jego wykonanie zdalne będzie można potwierdzić po wypchnięciu commita. Lokalna walidacja projektu jest wykonywana przed commitem.
 - **Husky i lint-staged pominięte** jako opcjonalne.
 - Zmienne środowiskowe w CI nie są ustawiane; build działa, bo Supabase jest opcjonalny do etapu 1.
 
@@ -48,10 +49,10 @@ Stan na koniec etapu 0 (zmiany jeszcze nie zacommitowane).
 - Proponowane ustawienie Supabase Auth: wymagane potwierdzenie e-maila przed logowaniem. Szczegóły i konsekwencje opisano w sekcji [Uwierzytelnianie i potwierdzenie e-maila](#uwierzytelnianie-i-potwierdzenie-e-maila); ustawienie nie zostało jeszcze wdrożone.
 - Hosting: Vercel + Supabase Cloud (zgodnie z planem; nie był przedmiotem osobnej rozmowy).
 
-### Nadal do zatwierdzenia
+### Otwarte kwestie i konfiguracja
 
 - Zakres ankiety i ostateczna lista reguł dopasowania (do dopracowania w etapie 6).
-- Wdrożenie potwierdzenia e-maila: propozycja to wymaganie potwierdzenia przed logowaniem. Należy skonfigurować ją w Supabase Auth po utworzeniu projektu; nie jest to jeszcze wykonane ani zweryfikowane.
+- Ustawienia Supabase Auth nie zostały jeszcze zweryfikowane w Dashboardzie; potwierdzenie e-maila przed dostępem do konta pozostaje przyjętym założeniem do etapu 2.
 
 ## Problem i podejście
 
@@ -121,9 +122,9 @@ Kryteria ukończenia (stan: patrz [Status realizacji](#status-realizacji)):
 
 ## Etapy 1–9 (rezultat → kryteria akceptacji)
 
-Etap 1 wymaga założonego projektu Supabase (URL i klucz anon w `.env.local`) oraz wykonania `supabase init` i `link`.
+Etap 1 wymaga założonego projektu Supabase (URL i publiczny klucz API w `.env.local`) oraz wykonania `supabase init` i `link`.
 
-1. **Schemat i bezpieczeństwo:** migracje, enumy, RLS, trigger profili wymuszający rolę `adopter`, `is_staff()`, seed. Ręczne nadawanie staff przez SQL administratora projektu. → testy RLS: gość widzi tylko published; adopter nie widzi cudzych danych i nie może zmienić swojej roli; staff ma uprawnienia operacyjne; próba samodzielnej eskalacji roli jest zablokowana.
+1. **Schemat i bezpieczeństwo:** migracje, enumy, RLS, trigger profili wymuszający rolę `adopter`, `is_staff()`, seed. Ręczne nadawanie staff przez SQL administratora projektu. Projektem docelowym jest Supabase Cloud dev; migracje wdrażamy po przeglądzie przez `supabase db push`, nigdy przez `db reset` na projekcie zdalnym. Przed wdrożeniem ustalamy powtarzalny sposób testowania RLS na rolach gościa, adopter A/B i staff. → testy RLS: gość widzi tylko published; adopter nie widzi cudzych danych i nie może zmienić swojej roli; staff ma uprawnienia operacyjne; próba samodzielnej eskalacji roli jest zablokowana.
 2. **Auth:** rejestracja, logowanie, reset hasła, potwierdzenie e-maila zgodnie z proponowanym ustawieniem, proxy sesji (rozszerzenie `src/proxy.ts`), guardy tras. → E2E rejestracji obejmuje stan przed i po potwierdzeniu; niepotwierdzony użytkownik nie uzyskuje dostępu do chronionych funkcji; panel niedostępny dla adopter.
 3. **Panel staff — zwierzęta:** lista, formularz CRUD, publikacja/archiwizacja, upload i kolejność zdjęć. → staff dodaje zwierzę ze zdjęciem; walidacja pliku; adopter nie może uploadować.
 4. **Katalog publiczny:** lista, filtry/sortowanie/paginacja, profil, galeria, SEO. → gość widzi tylko published; filtry w URL; Lighthouse/a11y bazowe.
