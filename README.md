@@ -4,7 +4,7 @@ Platforma adopcyjna dla jednego schroniska: katalog zwierząt, konta adoptujący
 
 **Stack:** Next.js (App Router) · TypeScript · Tailwind CSS · shadcn/ui · Supabase (Postgres, Auth, Storage, RLS). Plan i status etapów: [docs/plan.md](docs/plan.md). Decyzje: [docs/adr](docs/adr).
 
-**Status:** Etap 1 — schemat i RLS profili, zwierząt oraz zdjęć — jest wdrożony do Supabase dev i zweryfikowany testami. Katalog UI nadal korzysta z danych przykładowych; jego podłączenie do bazy jest zaplanowane na późniejszy etap.
+**Status:** Etap 1 — schemat i RLS profili, zwierząt oraz zdjęć — jest wdrożony do Supabase dev i zweryfikowany testami. Etap 2 (Auth) jest w toku: dostępne są rejestracja, logowanie i reset hasła; pełny przepływ e-mailowy czeka na rozwiązanie limitu wysyłki Supabase. Katalog UI nadal korzysta z danych przykładowych.
 
 ## Uruchomienie
 
@@ -35,7 +35,7 @@ Wartości aplikacji trzymaj w `.env.local` (ignorowany przez Git) i w ustawienia
 
 ## Konfiguracja Supabase
 
-Projekt Supabase dev jest skonfigurowany, CLI zalogowane i repo podlinkowane; `GET /api/health` zwraca `supabase: ok`. Przed etapem 2 sprawdź w Auth → URL Configuration adres Site URL i dozwolone przekierowania oraz ustawienie potwierdzenia e-maila.
+Projekt Supabase dev jest skonfigurowany, CLI zalogowane i repo podlinkowane; `GET /api/health` zwraca `supabase: ok`. Ustawienia Auth — Site URL, dozwolone przekierowania i potwierdzanie e-maila — zostały sprawdzone w Dashboardzie 27.10.2026.
 
 ## Testy RLS
 
@@ -58,6 +58,10 @@ cp .env.rls.example .env.rls.local   # uzupełnij URL, klucz publiczny i dane tr
 Testy nie czytają `.env.local`. Używaj wyłącznie projektu dev i nie dodawaj klucza `service_role`. Test uruchomisz przez `npm test`. Gdy `.env.rls.local` lub jego zmiennych brakuje, testy RLS są pomijane. Test zwierząt wymaga wdrożonych migracji `create_animals` oraz `archive_animals_instead_of_deleting`; korzysta z ponownie używanych rekordów testowych, które po teście są archiwizowane. Sprawdza, że gość i adopter widzą wyłącznie zwierzęta opublikowane, zdjęcia dziedziczą tę widoczność, adopter nie może dodawać danych, staff widzi również wersje robocze, a zwierzęta można archiwizować, ale nie fizycznie usuwać przez API.
 
 Przykładowe dane zwierząt są w `supabase/seed.sql` i są ładowane przez lokalne `supabase db reset`. Nie uruchamiaj `db reset` na projekcie Cloud.
+
+## Uwierzytelnianie
+
+Formularze są dostępne pod `/register`, `/login`, `/forgot-password` i `/update-password`; linki e-mail obsługuje `/auth/callback`. Chronione strony korzystają z serwerowego `auth.getUser()` i wymagają potwierdzonego adresu e-mail. Site URL, dozwolone przekierowania (w tym callback zgodny z `NEXT_PUBLIC_SITE_URL`, np. `http://localhost:3000/auth/callback`) i potwierdzanie e-maila sprawdzono w Dashboardzie 27.10.2026. Pełny przepływ rejestracji i resetu nie jest jeszcze zweryfikowany: ponowna próba rejestracji zakończyła się błędem `over_email_send_rate_limit` (HTTP 429), a reset hasła nadal wymaga testu end-to-end. Przed uznaniem etapu Auth za zakończony trzeba rozwiązać limit wysyłki i powtórzyć testy.
 
 ## Struktura
 

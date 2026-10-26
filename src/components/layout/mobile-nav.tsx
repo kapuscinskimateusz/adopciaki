@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 import { NAV_LINKS } from "./nav-links";
 
 export function MobileNav() {
@@ -41,8 +42,8 @@ export function MobileNav() {
               </li>
             ))}
             <li className="mt-2 flex gap-2">
-              <a
-                href="#konto"
+              <Link
+                href="/login"
                 onClick={() => setOpen(false)}
                 className={cn(
                   buttonVariants({ variant: "outline" }),
@@ -50,14 +51,14 @@ export function MobileNav() {
                 )}
               >
                 Zaloguj się
-              </a>
-              <a
-                href="#konto"
+              </Link>
+              <Link
+                href="/register"
                 onClick={() => setOpen(false)}
                 className={cn(buttonVariants(), "h-11 flex-1 rounded-full text-base")}
               >
                 Załóż konto
-              </a>
+              </Link>
             </li>
           </ul>
         </nav>

@@ -1,5 +1,6 @@
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 import { Logo } from "./logo";
 import { MobileNav } from "./mobile-nav";
 import { NAV_LINKS } from "./nav-links";
@@ -26,15 +27,18 @@ export function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
-          <a
-            href="#konto"
+          <Link
+            href="/login"
             className={cn(buttonVariants({ variant: "ghost" }), "h-10 rounded-full px-4")}
           >
             Zaloguj się
-          </a>
-          <a href="#konto" className={cn(buttonVariants(), "h-10 rounded-full px-5")}>
+          </Link>
+          <Link
+            href="/register"
+            className={cn(buttonVariants(), "h-10 rounded-full px-5")}
+          >
             Załóż konto
-          </a>
+          </Link>
         </div>
 
         <MobileNav />
