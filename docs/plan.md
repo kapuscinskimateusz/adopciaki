@@ -5,18 +5,18 @@ Sekcje „Plan” opisują zamierzony stan. Sekcja [Status realizacji](#status-r
 
 ## Status realizacji
 
-Stan na przygotowanie przejścia do etapu 1.
+Stan uzgodniony 26.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` jest skonfigurowany, a lokalne połączenie zweryfikowane. Do zrobienia przed etapem 1 pozostaje logowanie i link Supabase CLI.
 
-| Etap         | Status                                           |
-| ------------ | ------------------------------------------------ |
-| 0. Fundament | Gotowy; połączenie z Supabase Cloud potwierdzone |
-| 1–9          | Nie rozpoczęte                                   |
+| Etap         | Status                                                                               |
+| ------------ | ------------------------------------------------------------------------------------ |
+| 0. Fundament | Gotowy; połączenie z Supabase Cloud dev zweryfikowane lokalnie, CLI do podlinkowania |
+| 1–9          | Nie rozpoczęte                                                                       |
 
 ### Etap 0 — wykonane i zweryfikowane
 
-- Projekt Supabase Cloud został utworzony, a lokalna konfiguracja CLI została zainicjalizowana i połączona z projektem.
-- `.env.local` zawiera wyłącznie publiczny URL i klucz publishable; plik jest ignorowany przez Git. Klucz `service_role` nie jest ustawiony ani potrzebny na tym etapie.
-- `GET /api/health` zwraca `{"app":"ok","supabase":"ok"}` przy lokalnej konfiguracji; osobne, tylko do odczytu żądanie do Supabase Auth z kluczem publishable zwróciło HTTP 200.
+- Użytkownik potwierdził, że projekt Supabase Cloud dev istnieje i ma do niego dostęp. Na tym komputerze skonfigurowano `.env.local` (ignorowany przez Git; klucz `service_role` nie jest potrzebny).
+- `GET /api/health` zwraca lokalnie `{"app":"ok","supabase":"ok"}` (zweryfikowane 26.10.2026). Supabase CLI nie jest jeszcze zalogowany ani podlinkowany (brak `supabase/.temp/project-ref`).
+- Środowisko uruchomieniowe: Node 22 (`.nvmrc`). Na Node 17 Next.js nie startuje (wymaga ≥ 20.9). Uszkodzone binarki SWC w `node_modules` powodowały ciche zakończenie `next dev` po `Ready` (SIGBUS); naprawione przez `npm ci`.
 - W `supabase/config.toml` automatyczne wystawianie nowych tabel przez lokalne Data API jest wyłączone. To ustawienie nie zmienia konfiguracji Supabase Cloud.
 - Tryb bez konfiguracji Supabase, walidacja Zod, nagłówki bezpieczeństwa i wyłączenie `X-Powered-By` pozostają obsługiwane.
 - `.env.example`, README, ADR-0001, AGENTS.md, plan, struktura aplikacji i workflow CI są obecne.
@@ -24,6 +24,7 @@ Stan na przygotowanie przejścia do etapu 1.
 
 ### Do wykonania później — nie blokuje etapu 1
 
+- **Przed etapem 1:** zalogować Supabase CLI (`npx supabase login`) i wykonać `supabase link --project-ref <ref>`. `supabase/config.toml` już istnieje w repo, więc `supabase init` nie jest potrzebne.
 - **Przed wdrożeniem pierwszej migracji:** sprawdzić w Supabase Dashboard ustawienia Data API i automatycznego wystawiania nowych tabel; konfiguracja CLI dotyczy lokalnego środowiska.
 - **Supabase Auth:** Site URL, dozwolone adresy przekierowań i potwierdzenie e-maila trzeba sprawdzić/skonfigurować w Dashboardzie przed etapem 2 (Auth). Nie są wymagane do tworzenia schematu w etapie 1.
 - **GitHub Actions:** workflow jest przygotowany; jego wykonanie zdalne będzie można potwierdzić po wypchnięciu commita. Lokalna walidacja projektu jest wykonywana przed commitem.
@@ -122,7 +123,7 @@ Kryteria ukończenia (stan: patrz [Status realizacji](#status-realizacji)):
 
 ## Etapy 1–9 (rezultat → kryteria akceptacji)
 
-Etap 1 wymaga założonego projektu Supabase (URL i publiczny klucz API w `.env.local`) oraz wykonania `supabase init` i `link`.
+Etap 1 wymaga projektu Supabase dev (potwierdzony, `.env.local` skonfigurowany) oraz połączenia CLI (`supabase link`). Plik `supabase/config.toml` już istnieje; nie trzeba ponownie wykonywać `supabase init`.
 
 1. **Schemat i bezpieczeństwo:** migracje, enumy, RLS, trigger profili wymuszający rolę `adopter`, `is_staff()`, seed. Ręczne nadawanie staff przez SQL administratora projektu. Projektem docelowym jest Supabase Cloud dev; migracje wdrażamy po przeglądzie przez `supabase db push`, nigdy przez `db reset` na projekcie zdalnym. Przed wdrożeniem ustalamy powtarzalny sposób testowania RLS na rolach gościa, adopter A/B i staff. → testy RLS: gość widzi tylko published; adopter nie widzi cudzych danych i nie może zmienić swojej roli; staff ma uprawnienia operacyjne; próba samodzielnej eskalacji roli jest zablokowana.
 2. **Auth:** rejestracja, logowanie, reset hasła, potwierdzenie e-maila zgodnie z proponowanym ustawieniem, proxy sesji (rozszerzenie `src/proxy.ts`), guardy tras. → E2E rejestracji obejmuje stan przed i po potwierdzeniu; niepotwierdzony użytkownik nie uzyskuje dostępu do chronionych funkcji; panel niedostępny dla adopter.
