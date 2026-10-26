@@ -1,0 +1,75 @@
+insert into public.animals (
+  id,
+  slug,
+  name,
+  species,
+  breed,
+  age_months,
+  sex,
+  size,
+  energy_level,
+  description,
+  traits,
+  publication_status,
+  adoption_status
+)
+values
+  (
+    '50000000-0000-4000-8000-000000000001',
+    'fasola',
+    'Fasola',
+    'dog',
+    'Mieszaniec',
+    36,
+    'female',
+    'medium',
+    4,
+    'Uwielbia długie spacery i aportowanie. Z dziećmi dogaduje się świetnie.',
+    array['Lubi dzieci', 'Aktywna'],
+    'published',
+    'available'
+  ),
+  (
+    '50000000-0000-4000-8000-000000000002',
+    'pepe',
+    'Pepe',
+    'cat',
+    'Europejski krótkowłosy',
+    24,
+    'male',
+    'small',
+    3,
+    'Ciekawski towarzysz kanapowy. Zna już swoje imię i przychodzi na zawołanie.',
+    array['Domowy', 'Towarzyski'],
+    'published',
+    'available'
+  ),
+  (
+    '50000000-0000-4000-8000-000000000003',
+    'klara',
+    'Klara',
+    'rabbit',
+    'Królik miniaturka',
+    12,
+    'female',
+    'small',
+    2,
+    'Spokojna i delikatna. Najlepiej odnajdzie się w cichym domu.',
+    array['Spokojna', 'Cicha'],
+    'published',
+    'meeting'
+  )
+on conflict (id) do update
+set
+  slug = excluded.slug,
+  name = excluded.name,
+  species = excluded.species,
+  breed = excluded.breed,
+  age_months = excluded.age_months,
+  sex = excluded.sex,
+  size = excluded.size,
+  energy_level = excluded.energy_level,
+  description = excluded.description,
+  traits = excluded.traits,
+  publication_status = excluded.publication_status,
+  adoption_status = excluded.adoption_status;

@@ -42,7 +42,8 @@ Stan uzgodniony 26.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` je
 ### Etap 1 — w toku
 
 - Przyrost profili: migracja `20261026213000_create_profiles.sql` definiuje role i profile, tworzy brakujące profile istniejących użytkowników, ustawia nowe profile jako `adopter`, dodaje helper `is_staff()` i politykę odczytu. Migracja została wdrożona do Supabase Cloud dev 26.10.2026.
-- Test RLS gościa przeszedł przeciwko Supabase dev. Testy adopter A/B i staff są przygotowane, ale wymagają testowych kont; bez pełnego zestawu zmiennych są pomijane.
+- Testy RLS profili dla gościa, adopterów A/B i staff przeszły przeciwko Supabase dev 26.10.2026.
+- Przyrost zwierząt: migracja `20261026230000_create_animals.sql` tworzy zwierzęta i metadane zdjęć, osobne statusy publikacji i adopcji oraz polityki RLS; wdrożona do Supabase Cloud dev 26.10.2026. Testy gościa, adopterów i staff przeszły. Przykładowe dane dla lokalnego środowiska są w `supabase/seed.sql`.
 
 ### Podjęte decyzje
 
@@ -87,6 +88,7 @@ Stan zależności: zainstalowane są Next.js, Tailwind, shadcn/ui, `@supabase/ss
 - Rola w `profiles.role` (`adopter` | `staff`); rola `adopter` jest wartością domyślną nadawaną przez bazę przy tworzeniu profilu. Nie ufamy roli z user metadata ani danym wejściowym z klienta. Nadanie `staff` jest ręczne przez administratora projektu w SQL; nie ma systemu zaproszeń w MVP.
 - `is_staff()` (security definer) może być helperem do polityk RLS, z ograniczonym `search_path` i minimalnymi uprawnieniami. Polityki muszą uniemożliwiać użytkownikowi samodzielną zmianę `profiles.role` i eskalację uprawnień; uprawnienia egzekwuje baza, nie ukrywanie elementów UI. Trigger tworzy profil z rolą `adopter` po rejestracji.
 - Tabele: `profiles`, `animals` (cechy jako kolumny/enumy), `animal_photos`, `favorites`, `adopter_preferences`, `applications`, `application_status_history`, `staff_notes`. Osobne `traits` + `animal_traits` tylko gdy będzie uzasadnione.
+- `animals` rozdziela `publication_status` (`draft`, `published`, `archived`) od `adoption_status` (`available`, `meeting`, `adopted`); publiczne role widzą tylko opublikowane rekordy. `animal_photos` przechowuje metadane i ścieżkę obiektu; upload i polityki Storage są osobnym przyrostem panelu staff.
 - Statusy jako enumy Postgresa; zmiana statusu zgłoszenia przez funkcję RPC (walidacja przejść + wpis do historii w jednej transakcji).
 - Unikalność: jedno aktywne zgłoszenie na parę (user, zwierzę) — partial unique index.
 - Dopasowanie: czysta funkcja TypeScript (testowalna), zwraca score + powody; liczona po stronie serwera, nie przechowywana.
@@ -146,7 +148,7 @@ Etap 1 wymaga projektu Supabase dev (potwierdzony, `.env.local` skonfigurowany) 
 - Klucz `service_role` tylko serwerowo, nigdy w kliencie; sekrety w env; walidacja Zod po stronie serwera; uprawnienia egzekwowane w DB.
 - Minimalizacja danych osobowych, brak dokumentów w MVP, polityka prywatności i retencja opisane w README.
 
-### Testy RLS profili — konfiguracja lokalna
+### Testy RLS profili i zwierząt — konfiguracja lokalna
 
 Testy w `src/lib/supabase/rls.test.ts` łączą się z Supabase Cloud dev przez publiczny klucz API i konta testowe; nie używają `service_role`. Po wdrożeniu migracji utwórz w Auth trzech użytkowników testowych: adopter A, adopter B i staff. Profil A można utworzyć z user metadata `{"role":"staff"}` — test potwierdzi, że metadata nie nadaje uprawnień. Nadaj rolę staff dla trzeciego profilu ręcznie w SQL Editor jako administrator projektu:
 
@@ -160,4 +162,4 @@ where id = (
 
 Skopiuj `.env.rls.example` do ignorowanego `.env.rls.local` i uzupełnij URL, klucz publiczny oraz adresy i hasła kont (testy nie czytają `.env.local`).
 
-Uruchom `npm test`. Testy sprawdzają brak dostępu gościa, prywatność profili adopterów, blokadę eskalacji roli oraz odczyt przez staff. Bez `.env.rls.local` test RLS jest pominięty.
+Uruchom `npm test`. Testy sprawdzają brak dostępu gościa do profili, prywatność profili adopterów, blokadę eskalacji roli, odczyt profili przez staff oraz widoczność wyłącznie opublikowanych zwierząt i ich zdjęć dla gościa/adoptera. Test tworzy i usuwa własne rekordy zwierząt przez konto staff. Bez `.env.rls.local` testy RLS są pominięte. Przykładowe dane dla lokalnego środowiska są w `supabase/seed.sql`; nigdy nie używaj `supabase db reset` na projekcie Cloud.

@@ -4,7 +4,7 @@ Platforma adopcyjna dla jednego schroniska: katalog zwierząt, konta adoptujący
 
 **Stack:** Next.js (App Router) · TypeScript · Tailwind CSS · shadcn/ui · Supabase (Postgres, Auth, Storage, RLS). Plan i status etapów: [docs/plan.md](docs/plan.md). Decyzje: [docs/adr](docs/adr).
 
-**Status:** fundament aplikacji jest gotowy. Lokalnie skonfigurowano `.env.local`, zweryfikowano połączenie z projektem Supabase Cloud dev, a CLI zalogowano i repo podlinkowano. Etap 1 jest w toku: migracja profili została wdrożona, test dostępu gościa przeszedł; pełny test RLS wymaga kont adopter A/B i staff.
+**Status:** fundament aplikacji jest gotowy. Etap 1: profile oraz tabele zwierząt i zdjęć są wdrożone do Supabase dev i zweryfikowane testami RLS. Katalog UI nadal korzysta z danych przykładowych; jego podłączenie do bazy jest zaplanowane na późniejszy etap.
 
 ## Uruchomienie
 
@@ -43,7 +43,7 @@ Wartości trzymaj w `.env.local` (ignorowany przez Git) i w ustawieniach hosting
 
 ## Testy RLS
 
-Testy integracyjne profili łączą się z Supabase Cloud dev przez klucz publiczny i osobne konta testowe; nie używają `service_role`. Utwórz dwa konta adopter i jedno konto staff w Supabase Auth. Profil adopter A można utworzyć z user metadata `{"role":"staff"}` — test sprawdzi, że rola w bazie nadal pozostaje `adopter`. Nadaj trzeciemu użytkownikowi rolę `staff` ręcznie w SQL Editor:
+Testy integracyjne łączą się z Supabase Cloud dev przez klucz publiczny i osobne konta testowe; nie używają `service_role`. Utwórz dwa konta adopter i jedno konto staff w Supabase Auth. Profil adopter A można utworzyć z user metadata `{"role":"staff"}` — test sprawdzi, że rola w bazie nadal pozostaje `adopter`. Nadaj trzeciemu użytkownikowi rolę `staff` ręcznie w SQL Editor:
 
 ```sql
 update public.profiles
@@ -59,7 +59,9 @@ Konfigurację testów trzymaj w osobnym, ignorowanym przez Git pliku `.env.rls.l
 cp .env.rls.example .env.rls.local   # uzupełnij URL, klucz publiczny i dane trzech kont
 ```
 
-Testy nie czytają `.env.local`. Używaj wyłącznie projektu dev i nie dodawaj klucza `service_role`. Test uruchomisz przez `npm test`. Gdy `.env.rls.local` lub jego zmiennych brakuje, testy RLS są pomijane.
+Testy nie czytają `.env.local`. Używaj wyłącznie projektu dev i nie dodawaj klucza `service_role`. Test uruchomisz przez `npm test`. Gdy `.env.rls.local` lub jego zmiennych brakuje, testy RLS są pomijane. Test zwierząt wymaga wdrożenia migracji `create_animals`; tworzy i usuwa własne rekordy testowe. Sprawdza, że gość i adopter widzą wyłącznie zwierzęta opublikowane, zdjęcia dziedziczą tę widoczność, adopter nie może dodawać danych, a staff widzi również wersje robocze.
+
+Przykładowe dane zwierząt są w `supabase/seed.sql` i są ładowane przez lokalne `supabase db reset`. Nie uruchamiaj `db reset` na projekcie Cloud.
 
 ## Struktura
 
