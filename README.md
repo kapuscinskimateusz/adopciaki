@@ -4,7 +4,7 @@ Platforma adopcyjna dla jednego schroniska: katalog zwierząt, konta adoptujący
 
 **Stack:** Next.js (App Router) · TypeScript · Tailwind CSS · shadcn/ui · Supabase (Postgres, Auth, Storage, RLS). Plan i status etapów: [docs/plan.md](docs/plan.md). Decyzje: [docs/adr](docs/adr).
 
-**Status:** fundament aplikacji jest gotowy. Etap 1: profile oraz tabele zwierząt i zdjęć są wdrożone do Supabase dev i zweryfikowane testami RLS. Katalog UI nadal korzysta z danych przykładowych; jego podłączenie do bazy jest zaplanowane na późniejszy etap.
+**Status:** Etap 1 — schemat i RLS profili, zwierząt oraz zdjęć — jest wdrożony do Supabase dev i zweryfikowany testami. Katalog UI nadal korzysta z danych przykładowych; jego podłączenie do bazy jest zaplanowane na późniejszy etap.
 
 ## Uruchomienie
 
@@ -31,15 +31,11 @@ Health check: `GET /api/health` (`supabase: not_configured | ok | error`).
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | publiczna        | klucz anon (bezpieczny dzięki RLS)                               |
 | `SUPABASE_SERVICE_ROLE_KEY`     | **tylko serwer** | omija RLS; nigdy w kodzie klienta ani z prefiksem `NEXT_PUBLIC_` |
 
-Wartości trzymaj w `.env.local` (ignorowany przez Git) i w ustawieniach hostingu. Repo zawiera tylko `.env.example`.
+Wartości aplikacji trzymaj w `.env.local` (ignorowany przez Git) i w ustawieniach hostingu. Repo zawiera szablony `.env.example` oraz `.env.rls.example`; drugi dotyczy wyłącznie testów RLS.
 
-## Konfiguracja Supabase przed etapem 1
+## Konfiguracja Supabase
 
-1. Użyj istniejącego projektu dev potwierdzonego w Supabase Dashboard; nie twórz drugiego projektu.
-2. Skopiuj URL projektu i klucz publiczny (publishable/anon) do `.env.local`. Nie dodawaj klucza `service_role`. (Zrobione lokalnie.)
-3. Zaloguj Supabase CLI (`npx supabase login`) i połącz repo z projektem (`npx supabase link --project-ref <ref>`). `supabase/config.toml` jest już w repo, więc nie trzeba ponownie uruchamiać `supabase init`. (Zrobione lokalnie.)
-4. Uruchom aplikację i sprawdź `GET /api/health`; oczekiwany status połączenia to `supabase: ok`. (Zweryfikowane lokalnie.)
-5. Przed etapem 2 sprawdź w Auth → URL Configuration adres Site URL i dozwolone przekierowania.
+Projekt Supabase dev jest skonfigurowany, CLI zalogowane i repo podlinkowane; `GET /api/health` zwraca `supabase: ok`. Przed etapem 2 sprawdź w Auth → URL Configuration adres Site URL i dozwolone przekierowania oraz ustawienie potwierdzenia e-maila.
 
 ## Testy RLS
 
@@ -59,7 +55,7 @@ Konfigurację testów trzymaj w osobnym, ignorowanym przez Git pliku `.env.rls.l
 cp .env.rls.example .env.rls.local   # uzupełnij URL, klucz publiczny i dane trzech kont
 ```
 
-Testy nie czytają `.env.local`. Używaj wyłącznie projektu dev i nie dodawaj klucza `service_role`. Test uruchomisz przez `npm test`. Gdy `.env.rls.local` lub jego zmiennych brakuje, testy RLS są pomijane. Test zwierząt wymaga wdrożenia migracji `create_animals`; tworzy i usuwa własne rekordy testowe. Sprawdza, że gość i adopter widzą wyłącznie zwierzęta opublikowane, zdjęcia dziedziczą tę widoczność, adopter nie może dodawać danych, a staff widzi również wersje robocze.
+Testy nie czytają `.env.local`. Używaj wyłącznie projektu dev i nie dodawaj klucza `service_role`. Test uruchomisz przez `npm test`. Gdy `.env.rls.local` lub jego zmiennych brakuje, testy RLS są pomijane. Test zwierząt wymaga wdrożonych migracji `create_animals` oraz `archive_animals_instead_of_deleting`; korzysta z ponownie używanych rekordów testowych, które po teście są archiwizowane. Sprawdza, że gość i adopter widzą wyłącznie zwierzęta opublikowane, zdjęcia dziedziczą tę widoczność, adopter nie może dodawać danych, staff widzi również wersje robocze, a zwierzęta można archiwizować, ale nie fizycznie usuwać przez API.
 
 Przykładowe dane zwierząt są w `supabase/seed.sql` i są ładowane przez lokalne `supabase db reset`. Nie uruchamiaj `db reset` na projekcie Cloud.
 

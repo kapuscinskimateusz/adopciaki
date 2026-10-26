@@ -7,11 +7,11 @@ Sekcje „Plan” opisują zamierzony stan. Sekcja [Status realizacji](#status-r
 
 Stan uzgodniony 26.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` jest skonfigurowany, a lokalne połączenie zweryfikowane. CLI jest zalogowane i repo podlinkowane.
 
-| Etap         | Status                                                               |
-| ------------ | -------------------------------------------------------------------- |
-| 0. Fundament | Gotowy; połączenie z Supabase Cloud dev zweryfikowane lokalnie       |
-| 1. Schemat   | W toku; migracja profili wdrożona, testy adopter/staff wymagają kont |
-| 2–9          | Nie rozpoczęte                                                       |
+| Etap         | Status                                                                       |
+| ------------ | ---------------------------------------------------------------------------- |
+| 0. Fundament | Gotowy; połączenie z Supabase Cloud dev zweryfikowane lokalnie               |
+| 1. Schemat   | Gotowy; profile, zwierzęta, zdjęcia i RLS wdrożone, testy integracyjne zdane |
+| 2–9          | Nie rozpoczęte                                                               |
 
 ### Etap 0 — wykonane i zweryfikowane
 
@@ -20,15 +20,15 @@ Stan uzgodniony 26.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` je
 - Środowisko uruchomieniowe: Node 22 (`.nvmrc`). Na Node 17 Next.js nie startuje (wymaga ≥ 20.9). Uszkodzone binarki SWC w `node_modules` powodowały ciche zakończenie `next dev` po `Ready` (SIGBUS); naprawione przez `npm ci`.
 - W `supabase/config.toml` automatyczne wystawianie nowych tabel przez lokalne Data API jest wyłączone. To ustawienie nie zmienia konfiguracji Supabase Cloud.
 - Tryb bez konfiguracji Supabase, walidacja Zod, nagłówki bezpieczeństwa i wyłączenie `X-Powered-By` pozostają obsługiwane.
-- `.env.example`, README, ADR-0001, AGENTS.md, plan, struktura aplikacji i workflow CI są obecne.
+- `.env.example`, `.env.rls.example`, README, ADR-0001, AGENTS.md, plan, struktura aplikacji i workflow CI są obecne.
 
-### Do wykonania później — nie blokuje etapu 1
+### Do wykonania przed kolejnymi etapami
 
-- **RLS profili:** ustawienie Cloud Data API dla automatycznego wystawiania tabel jest włączone. Migracja jawnie odebrała dostęp domyślny do `profiles` i przyznała `SELECT` tylko roli `authenticated`. Test gościa przeszedł; przed uznaniem przyrostu za zakończony skonfigurować konta adopter A/B i staff oraz uruchomić pełny zestaw testów RLS.
+- **Kolejne tabele:** każda nowa tabela i funkcja musi otrzymać jawne uprawnienia, RLS i testy dla gościa/adopterów/staff; aktualne testy profili i zwierząt przechodzą na Supabase dev.
 - **Supabase Auth:** Site URL, dozwolone adresy przekierowań i potwierdzenie e-maila trzeba sprawdzić/skonfigurować w Dashboardzie przed etapem 2 (Auth). Nie są wymagane do tworzenia schematu w etapie 1.
 - **GitHub Actions:** workflow jest przygotowany; jego wykonanie zdalne będzie można potwierdzić po wypchnięciu commita. Lokalna walidacja projektu jest wykonywana przed commitem.
 - **Husky i lint-staged pominięte** jako opcjonalne.
-- Zmienne środowiskowe w CI nie są ustawiane; build działa, bo Supabase jest opcjonalny do etapu 1.
+- Zmienne środowiskowe w CI nie są ustawiane; build działa bez konfiguracji Supabase.
 
 ### Odchylenia od pierwotnego planu etapu 0
 
@@ -39,11 +39,13 @@ Stan uzgodniony 26.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` je
 - Dodano trasę `GET /api/health`.
 - Domyślne pliki SVG w `public/` zostają na razie.
 
-### Etap 1 — w toku
+### Etap 1 — zakończony
 
 - Przyrost profili: migracja `20261026213000_create_profiles.sql` definiuje role i profile, tworzy brakujące profile istniejących użytkowników, ustawia nowe profile jako `adopter`, dodaje helper `is_staff()` i politykę odczytu. Migracja została wdrożona do Supabase Cloud dev 26.10.2026.
 - Testy RLS profili dla gościa, adopterów A/B i staff przeszły przeciwko Supabase dev 26.10.2026.
 - Przyrost zwierząt: migracja `20261026230000_create_animals.sql` tworzy zwierzęta i metadane zdjęć, osobne statusy publikacji i adopcji oraz polityki RLS; wdrożona do Supabase Cloud dev 26.10.2026. Testy gościa, adopterów i staff przeszły. Przykładowe dane dla lokalnego środowiska są w `supabase/seed.sql`.
+- Migracja `20261026231800_archive_animals_instead_of_deleting.sql` odbiera staffowi możliwość fizycznego usuwania zwierząt; została wdrożona do Supabase Cloud dev 26.10.2026. Zwierzęta można archiwizować przez `publication_status`.
+- Pełny zestaw integracyjny profili, zwierząt i zdjęć: 12 testów przeszło przeciwko Supabase dev 26.10.2026. `supabase/seed.sql` zawiera dane przykładowe dla lokalnego środowiska.
 
 ### Podjęte decyzje
 
@@ -109,7 +111,7 @@ Decyzje: Supabase Cloud (migracje przez `supabase` CLI uruchamiane z `npx`, `db 
 
 Zakres:
 
-1. `git init`, `.gitignore` (w tym `.env*` poza `.env.example`), README (licencja opcjonalnie).
+1. `git init`, `.gitignore` (w tym `.env*` poza `.env.example` i `.env.rls.example`), README (licencja opcjonalnie).
 2. `create-next-app` (App Router, TS strict, ESLint, Tailwind, `src/`, alias `@/`), `shadcn init`.
 3. Struktura: `src/app/(public)`, `(auth)`, `(account)`, `admin`; `src/lib/supabase/{client,server,proxy}.ts` (`@supabase/ssr`; w Next.js 16 plik proxy zamiast middleware); `src/proxy.ts`; `src/lib/env.ts` (walidacja Zod, fail-fast); `src/features/*`; `supabase/migrations`; `docs/adr`.
 4. Env: `.env.example` z `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (tylko serwer, opcjonalny w etapie 0; moduł z `import "server-only"`), `NEXT_PUBLIC_SITE_URL`. Sekrety tylko w `.env.local` i panelu Vercel; osobny projekt Supabase dev (prod później).

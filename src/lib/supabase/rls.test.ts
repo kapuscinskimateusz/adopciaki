@@ -23,6 +23,10 @@ const adopterBEmail = process.env.SUPABASE_RLS_ADOPTER_B_EMAIL;
 const adopterBPassword = process.env.SUPABASE_RLS_ADOPTER_B_PASSWORD;
 const staffEmail = process.env.SUPABASE_RLS_STAFF_EMAIL;
 const staffPassword = process.env.SUPABASE_RLS_STAFF_PASSWORD;
+const publishedAnimalId = "70000000-0000-4000-8000-000000000001";
+const draftAnimalId = "70000000-0000-4000-8000-000000000002";
+const publishedPhotoId = "71000000-0000-4000-8000-000000000001";
+const draftPhotoId = "71000000-0000-4000-8000-000000000002";
 
 const publicTestIsConfigured = Boolean(supabaseUrl && anonKey);
 const testIsConfigured = Boolean(
@@ -84,11 +88,6 @@ describe.skipIf(!testIsConfigured)("profile row-level security", () => {
   let adopterA: TestUser;
   let adopterB: TestUser;
   let staff: TestUser;
-  const testAnimalIds: string[] = [];
-  let publishedAnimalId: string;
-  let draftAnimalId: string;
-  let publishedPhotoId: string;
-  let draftPhotoId: string;
 
   beforeAll(async () => {
     [adopterA, adopterB, staff] = await Promise.all([
@@ -106,12 +105,11 @@ describe.skipIf(!testIsConfigured)("profile row-level security", () => {
       ),
     ]);
 
-    const testToken = randomUUID();
-    const { data: animals, error: animalError } = await staff.client
-      .from("animals")
-      .insert([
+    const { error: animalError } = await staff.client.from("animals").upsert(
+      [
         {
-          slug: `rls-published-${testToken}`,
+          id: publishedAnimalId,
+          slug: "rls-published-test",
           name: "RLS published test",
           species: "dog",
           breed: "Test",
@@ -123,7 +121,8 @@ describe.skipIf(!testIsConfigured)("profile row-level security", () => {
           publication_status: "published",
         },
         {
-          slug: `rls-draft-${testToken}`,
+          id: draftAnimalId,
+          slug: "rls-draft-test",
           name: "RLS draft test",
           species: "cat",
           breed: "Test",
@@ -134,8 +133,9 @@ describe.skipIf(!testIsConfigured)("profile row-level security", () => {
           description: "Test record for RLS.",
           publication_status: "draft",
         },
-      ])
-      .select("id, publication_status");
+      ],
+      { onConflict: "id" },
+    );
 
     if (animalError) {
       throw new Error(
@@ -143,54 +143,40 @@ describe.skipIf(!testIsConfigured)("profile row-level security", () => {
       );
     }
 
-    const publishedAnimal = animals.find(
-      (animal) => animal.publication_status === "published",
-    );
-    const draftAnimal = animals.find((animal) => animal.publication_status === "draft");
-    if (!publishedAnimal || !draftAnimal) {
-      throw new Error("Supabase nie zwrócił obu zwierząt testowych.");
-    }
-    publishedAnimalId = publishedAnimal.id;
-    draftAnimalId = draftAnimal.id;
-    testAnimalIds.push(publishedAnimalId, draftAnimalId);
-
-    const { data: photos, error: photoError } = await staff.client
-      .from("animal_photos")
-      .insert([
+    const { error: photoError } = await staff.client.from("animal_photos").upsert(
+      [
         {
+          id: publishedPhotoId,
           animal_id: publishedAnimalId,
-          storage_path: `rls-tests/${testToken}/published.webp`,
+          storage_path: "rls-tests/published.webp",
           alt_text: "Test photo for a published animal.",
         },
         {
+          id: draftPhotoId,
           animal_id: draftAnimalId,
-          storage_path: `rls-tests/${testToken}/draft.webp`,
+          storage_path: "rls-tests/draft.webp",
           alt_text: "Test photo for a draft animal.",
         },
-      ])
-      .select("id, animal_id");
+      ],
+      { onConflict: "id" },
+    );
 
     if (photoError) {
       throw new Error(`Nie udało się utworzyć zdjęć testowych: ${photoError.message}`);
     }
-
-    const publishedPhoto = photos.find((photo) => photo.animal_id === publishedAnimalId);
-    const draftPhoto = photos.find((photo) => photo.animal_id === draftAnimalId);
-    if (!publishedPhoto || !draftPhoto) {
-      throw new Error("Supabase nie zwrócił obu zdjęć testowych.");
-    }
-    publishedPhotoId = publishedPhoto.id;
-    draftPhotoId = draftPhoto.id;
   });
 
   afterAll(async () => {
-    if (!staff || testAnimalIds.length === 0) {
+    if (!staff) {
       return;
     }
 
-    const { error } = await staff.client.from("animals").delete().in("id", testAnimalIds);
+    const { error } = await staff.client
+      .from("animals")
+      .update({ publication_status: "archived" })
+      .in("id", [publishedAnimalId, draftAnimalId]);
     if (error) {
-      throw new Error(`Nie udało się usunąć zwierząt testowych: ${error.message}`);
+      throw new Error(`Nie udało się zarchiwizować zwierząt testowych: ${error.message}`);
     }
   });
 
@@ -356,5 +342,35 @@ describe.skipIf(!testIsConfigured)("profile row-level security", () => {
 
     expect(animalError).not.toBeNull();
     expect(photoError).not.toBeNull();
+  });
+
+  it("archives animals and prevents staff from physically deleting them", async () => {
+    const { data: archivedAnimal, error: archiveError } = await staff.client
+      .from("animals")
+      .update({ publication_status: "archived" })
+      .eq("id", publishedAnimalId)
+      .select("id, publication_status")
+      .single();
+    const { error: deleteError } = await staff.client
+      .from("animals")
+      .delete()
+      .eq("id", draftAnimalId);
+    const { data: preservedAnimal, error: readError } = await staff.client
+      .from("animals")
+      .select("id, publication_status")
+      .eq("id", draftAnimalId)
+      .single();
+
+    expect(archiveError).toBeNull();
+    expect(archivedAnimal).toMatchObject({
+      id: publishedAnimalId,
+      publication_status: "archived",
+    });
+    expect(deleteError).not.toBeNull();
+    expect(readError).toBeNull();
+    expect(preservedAnimal).toMatchObject({
+      id: draftAnimalId,
+      publication_status: "draft",
+    });
   });
 });
