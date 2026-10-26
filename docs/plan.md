@@ -5,27 +5,26 @@ Sekcje „Plan” opisują zamierzony stan. Sekcja [Status realizacji](#status-r
 
 ## Status realizacji
 
-Stan uzgodniony 26.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` jest skonfigurowany, a lokalne połączenie zweryfikowane. Do zrobienia przed etapem 1 pozostaje logowanie i link Supabase CLI.
+Stan uzgodniony 26.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` jest skonfigurowany, a lokalne połączenie zweryfikowane. CLI jest zalogowane i repo podlinkowane.
 
-| Etap         | Status                                                                               |
-| ------------ | ------------------------------------------------------------------------------------ |
-| 0. Fundament | Gotowy; połączenie z Supabase Cloud dev zweryfikowane lokalnie, CLI do podlinkowania |
-| 1–9          | Nie rozpoczęte                                                                       |
+| Etap         | Status                                                               |
+| ------------ | -------------------------------------------------------------------- |
+| 0. Fundament | Gotowy; połączenie z Supabase Cloud dev zweryfikowane lokalnie       |
+| 1. Schemat   | W toku; migracja profili wdrożona, testy adopter/staff wymagają kont |
+| 2–9          | Nie rozpoczęte                                                       |
 
 ### Etap 0 — wykonane i zweryfikowane
 
-- Użytkownik potwierdził, że projekt Supabase Cloud dev istnieje i ma do niego dostęp. Na tym komputerze skonfigurowano `.env.local` (ignorowany przez Git; klucz `service_role` nie jest potrzebny).
-- `GET /api/health` zwraca lokalnie `{"app":"ok","supabase":"ok"}` (zweryfikowane 26.10.2026). Supabase CLI nie jest jeszcze zalogowany ani podlinkowany (brak `supabase/.temp/project-ref`).
+- Użytkownik potwierdził, że projekt Supabase Cloud dev istnieje i ma do niego dostęp. Na tym komputerze skonfigurowano `.env.local` (ignorowany przez Git; klucz `service_role` nie jest potrzebny), a Supabase CLI jest zalogowany i repo podlinkowane do projektu.
+- `GET /api/health` zwraca lokalnie `{"app":"ok","supabase":"ok"}` (zweryfikowane 26.10.2026).
 - Środowisko uruchomieniowe: Node 22 (`.nvmrc`). Na Node 17 Next.js nie startuje (wymaga ≥ 20.9). Uszkodzone binarki SWC w `node_modules` powodowały ciche zakończenie `next dev` po `Ready` (SIGBUS); naprawione przez `npm ci`.
 - W `supabase/config.toml` automatyczne wystawianie nowych tabel przez lokalne Data API jest wyłączone. To ustawienie nie zmienia konfiguracji Supabase Cloud.
 - Tryb bez konfiguracji Supabase, walidacja Zod, nagłówki bezpieczeństwa i wyłączenie `X-Powered-By` pozostają obsługiwane.
 - `.env.example`, README, ADR-0001, AGENTS.md, plan, struktura aplikacji i workflow CI są obecne.
-- Supabase nie ma jeszcze schematu aplikacji ani migracji; to będzie początek etapu 1.
 
 ### Do wykonania później — nie blokuje etapu 1
 
-- **Przed etapem 1:** zalogować Supabase CLI (`npx supabase login`) i wykonać `supabase link --project-ref <ref>`. `supabase/config.toml` już istnieje w repo, więc `supabase init` nie jest potrzebne.
-- **Przed wdrożeniem pierwszej migracji:** sprawdzić w Supabase Dashboard ustawienia Data API i automatycznego wystawiania nowych tabel; konfiguracja CLI dotyczy lokalnego środowiska.
+- **RLS profili:** ustawienie Cloud Data API dla automatycznego wystawiania tabel jest włączone. Migracja jawnie odebrała dostęp domyślny do `profiles` i przyznała `SELECT` tylko roli `authenticated`. Test gościa przeszedł; przed uznaniem przyrostu za zakończony skonfigurować konta adopter A/B i staff oraz uruchomić pełny zestaw testów RLS.
 - **Supabase Auth:** Site URL, dozwolone adresy przekierowań i potwierdzenie e-maila trzeba sprawdzić/skonfigurować w Dashboardzie przed etapem 2 (Auth). Nie są wymagane do tworzenia schematu w etapie 1.
 - **GitHub Actions:** workflow jest przygotowany; jego wykonanie zdalne będzie można potwierdzić po wypchnięciu commita. Lokalna walidacja projektu jest wykonywana przed commitem.
 - **Husky i lint-staged pominięte** jako opcjonalne.
@@ -39,6 +38,11 @@ Stan uzgodniony 26.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` je
 - Do etapu 1 aplikacja działa bez Supabase (konfiguracja opcjonalna).
 - Dodano trasę `GET /api/health`.
 - Domyślne pliki SVG w `public/` zostają na razie.
+
+### Etap 1 — w toku
+
+- Przyrost profili: migracja `20261026213000_create_profiles.sql` definiuje role i profile, tworzy brakujące profile istniejących użytkowników, ustawia nowe profile jako `adopter`, dodaje helper `is_staff()` i politykę odczytu. Migracja została wdrożona do Supabase Cloud dev 26.10.2026.
+- Test RLS gościa przeszedł przeciwko Supabase dev. Testy adopter A/B i staff są przygotowane, ale wymagają testowych kont; bez pełnego zestawu zmiennych są pomijane.
 
 ### Podjęte decyzje
 
@@ -141,3 +145,19 @@ Etap 1 wymaga projektu Supabase dev (potwierdzony, `.env.local` skonfigurowany) 
 - Vitest dla reguł i walidatorów; Playwright dla 2 przepływów (adopter, staff).
 - Klucz `service_role` tylko serwerowo, nigdy w kliencie; sekrety w env; walidacja Zod po stronie serwera; uprawnienia egzekwowane w DB.
 - Minimalizacja danych osobowych, brak dokumentów w MVP, polityka prywatności i retencja opisane w README.
+
+### Testy RLS profili — konfiguracja lokalna
+
+Testy w `src/lib/supabase/rls.test.ts` łączą się z Supabase Cloud dev przez publiczny klucz API i konta testowe; nie używają `service_role`. Po wdrożeniu migracji utwórz w Auth trzech użytkowników testowych: adopter A, adopter B i staff. Profil A można utworzyć z user metadata `{"role":"staff"}` — test potwierdzi, że metadata nie nadaje uprawnień. Nadaj rolę staff dla trzeciego profilu ręcznie w SQL Editor jako administrator projektu:
+
+```sql
+update public.profiles
+set role = 'staff'
+where id = (
+  select id from auth.users where email = 'staff-test@example.com'
+);
+```
+
+Skopiuj `.env.rls.example` do ignorowanego `.env.rls.local` i uzupełnij URL, klucz publiczny oraz adresy i hasła kont (testy nie czytają `.env.local`).
+
+Uruchom `npm test`. Testy sprawdzają brak dostępu gościa, prywatność profili adopterów, blokadę eskalacji roli oraz odczyt przez staff. Bez `.env.rls.local` test RLS jest pominięty.

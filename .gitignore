@@ -34,6 +34,7 @@ yarn-error.log*
 .env
 .env.*
 !.env.example
+!.env.rls.example
 
 # supabase CLI local state
 /supabase/.temp

@@ -4,7 +4,7 @@ Platforma adopcyjna dla jednego schroniska: katalog zwierząt, konta adoptujący
 
 **Stack:** Next.js (App Router) · TypeScript · Tailwind CSS · shadcn/ui · Supabase (Postgres, Auth, Storage, RLS). Plan i status etapów: [docs/plan.md](docs/plan.md). Decyzje: [docs/adr](docs/adr).
 
-**Status:** fundament aplikacji jest gotowy. Lokalnie skonfigurowano `.env.local` i zweryfikowano połączenie z projektem Supabase Cloud dev (`/api/health` zwraca `supabase: ok`). Do wykonania przed migracjami: zalogowanie Supabase CLI i `supabase link`. Aplikacja działa także bez konfiguracji Supabase.
+**Status:** fundament aplikacji jest gotowy. Lokalnie skonfigurowano `.env.local`, zweryfikowano połączenie z projektem Supabase Cloud dev, a CLI zalogowano i repo podlinkowano. Etap 1 jest w toku: migracja profili została wdrożona, test dostępu gościa przeszedł; pełny test RLS wymaga kont adopter A/B i staff.
 
 ## Uruchomienie
 
@@ -37,9 +37,29 @@ Wartości trzymaj w `.env.local` (ignorowany przez Git) i w ustawieniach hosting
 
 1. Użyj istniejącego projektu dev potwierdzonego w Supabase Dashboard; nie twórz drugiego projektu.
 2. Skopiuj URL projektu i klucz publiczny (publishable/anon) do `.env.local`. Nie dodawaj klucza `service_role`. (Zrobione lokalnie.)
-3. Zaloguj Supabase CLI przez `npx` (`npx supabase login`) i połącz repo z projektem (`npx supabase link --project-ref <ref>`). `supabase/config.toml` jest już w repo, więc nie trzeba ponownie uruchamiać `supabase init`.
+3. Zaloguj Supabase CLI (`npx supabase login`) i połącz repo z projektem (`npx supabase link --project-ref <ref>`). `supabase/config.toml` jest już w repo, więc nie trzeba ponownie uruchamiać `supabase init`. (Zrobione lokalnie.)
 4. Uruchom aplikację i sprawdź `GET /api/health`; oczekiwany status połączenia to `supabase: ok`. (Zweryfikowane lokalnie.)
 5. Przed etapem 2 sprawdź w Auth → URL Configuration adres Site URL i dozwolone przekierowania.
+
+## Testy RLS
+
+Testy integracyjne profili łączą się z Supabase Cloud dev przez klucz publiczny i osobne konta testowe; nie używają `service_role`. Utwórz dwa konta adopter i jedno konto staff w Supabase Auth. Profil adopter A można utworzyć z user metadata `{"role":"staff"}` — test sprawdzi, że rola w bazie nadal pozostaje `adopter`. Nadaj trzeciemu użytkownikowi rolę `staff` ręcznie w SQL Editor:
+
+```sql
+update public.profiles
+set role = 'staff'
+where id = (
+  select id from auth.users where email = 'staff-test@example.com'
+);
+```
+
+Konfigurację testów trzymaj w osobnym, ignorowanym przez Git pliku `.env.rls.local`:
+
+```bash
+cp .env.rls.example .env.rls.local   # uzupełnij URL, klucz publiczny i dane trzech kont
+```
+
+Testy nie czytają `.env.local`. Używaj wyłącznie projektu dev i nie dodawaj klucza `service_role`. Test uruchomisz przez `npm test`. Gdy `.env.rls.local` lub jego zmiennych brakuje, testy RLS są pomijane.
 
 ## Struktura
 
