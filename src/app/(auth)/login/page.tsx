@@ -21,7 +21,7 @@ export default async function LoginPage({
     <AuthCard title="Witaj ponownie" description="Zaloguj się na swoje konto adopcyjne.">
       <div className="space-y-5">
         <AuthMessage success={notice ? notices[notice] : undefined} />
-        <LoginForm next={safeRedirectPath(next)} />
+        <LoginForm next={safeRedirectPath(next, "")} />
         <p className="text-center text-sm">
           <Link
             href="/"

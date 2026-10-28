@@ -10,7 +10,7 @@ import {
   signUpSchema,
   updatePasswordSchema,
 } from "./schema";
-import { safeRedirectPath } from "./redirect";
+import { defaultPathForRole, safeRedirectPath } from "./redirect";
 
 function authCallbackUrl(next: string) {
   const callback = new URL("/auth/callback", publicEnv.NEXT_PUBLIC_SITE_URL);
@@ -118,7 +118,27 @@ export async function signInAction(
     };
   }
 
-  redirect(safeRedirectPath(formString(formData, "next")));
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", data.user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    throw new Error(
+      `Nie udało się odczytać roli po zalogowaniu: ${profileError.message}`,
+    );
+  }
+  if (!profile) {
+    throw new Error("Zalogowany użytkownik nie ma utworzonego profilu.");
+  }
+
+  if (profile.role !== "staff" && profile.role !== "adopter") {
+    throw new Error(`Profil ma nieobsługiwaną rolę: ${profile.role}`);
+  }
+  redirect(
+    safeRedirectPath(formString(formData, "next"), defaultPathForRole(profile.role)),
+  );
 }
 
 export async function requestPasswordResetAction(

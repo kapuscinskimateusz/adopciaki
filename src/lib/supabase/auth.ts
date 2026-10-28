@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
+import { safeRedirectPath } from "@/features/auth/redirect";
 import { createClient } from "./server";
 
 export const getCurrentUser = cache(async () => {
@@ -24,16 +25,16 @@ export const getCurrentUser = cache(async () => {
   };
 });
 
-export async function requireCurrentUser() {
+export async function requireCurrentUser(next = "/account") {
   const user = await getCurrentUser();
   if (!user) {
-    redirect(`/login?next=${encodeURIComponent("/account")}`);
+    redirect(`/login?next=${encodeURIComponent(safeRedirectPath(next))}`);
   }
   return user;
 }
 
-export async function requireStaff() {
-  const user = await requireCurrentUser();
+export async function requireStaff(next = "/admin") {
+  const user = await requireCurrentUser(next);
   const supabase = await createClient();
   const { data: profile, error } = await supabase
     .from("profiles")

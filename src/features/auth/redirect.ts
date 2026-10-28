@@ -1,3 +1,9 @@
+export type AppRole = "adopter" | "staff";
+
+export function defaultPathForRole(role: AppRole): string {
+  return role === "staff" ? "/admin" : "/account";
+}
+
 export function safeRedirectPath(
   value: string | null | undefined,
   fallback = "/account",

@@ -5,14 +5,15 @@ Sekcje „Plan” opisują zamierzony stan. Sekcja [Status realizacji](#status-r
 
 ## Status realizacji
 
-Stan uzgodniony 27.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` jest skonfigurowany, a lokalne połączenie zweryfikowane. CLI jest zalogowane i repo podlinkowane.
+Stan na 28.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` jest skonfigurowany, a lokalne połączenie zweryfikowane. CLI jest zalogowane i repo podlinkowane.
 
-| Etap         | Status                                                                       |
-| ------------ | ---------------------------------------------------------------------------- |
-| 0. Fundament | Gotowy; połączenie z Supabase Cloud dev zweryfikowane lokalnie               |
-| 1. Schemat   | Gotowy; profile, zwierzęta, zdjęcia i RLS wdrożone, testy integracyjne zdane |
-| 2. Auth      | W toku; formularze i serwerowa obsługa sesji zaimplementowane                |
-| 3–9          | Nie rozpoczęte                                                               |
+| Etap         | Status                                                                                             |
+| ------------ | -------------------------------------------------------------------------------------------------- |
+| 0. Fundament | Gotowy; połączenie z Supabase Cloud dev zweryfikowane lokalnie                                     |
+| 1. Schemat   | Gotowy; profile, zwierzęta, zdjęcia i RLS wdrożone, testy integracyjne zdane                       |
+| 2. Auth      | Gotowy; implementacja i ręczne testy E2E przepływu e-mailowego potwierdzone przez użytkownika      |
+| 3. Panel     | W toku; moduł zwierząt działa lokalnie, testy RLS przeszły w Supabase dev, ręczny test UI pozostał |
+| 4–9          | Nie rozpoczęte                                                                                     |
 
 ### Etap 0 — wykonane i zweryfikowane
 
@@ -26,7 +27,7 @@ Stan uzgodniony 27.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` je
 ### Do wykonania przed kolejnymi etapami
 
 - **Kolejne tabele:** każda nowa tabela i funkcja musi otrzymać jawne uprawnienia, RLS i testy dla gościa/adopterów/staff; aktualne testy profili i zwierząt przechodzą na Supabase dev.
-- **Supabase Auth:** Site URL, dozwolone adresy przekierowań i włączone potwierdzanie e-maila sprawdzono w Dashboardzie 27.10.2026. Ponowna próba rejestracji zwróciła `over_email_send_rate_limit` (HTTP 429); pełny przepływ rejestracji i resetu pozostaje do przetestowania po rozwiązaniu limitu wysyłki. Callback aplikacji to `/auth/callback`; pełny adres musi odpowiadać `NEXT_PUBLIC_SITE_URL` (lokalnie port 3000 lub faktyczny port dev).
+- **Supabase Auth:** Site URL, dozwolone adresy przekierowań i wymagane potwierdzanie e-maila sprawdzono w Dashboardzie 27.10.2026. Użytkownik potwierdził 28.10.2026, że rejestracja, potwierdzenie e-maila, logowanie i reset hasła działają z domyślną wysyłką Supabase. Własny SMTP nie jest obecnie potrzebny. Callback aplikacji to `/auth/callback`; pełny adres musi odpowiadać `NEXT_PUBLIC_SITE_URL` (lokalnie port 3000 lub faktyczny port dev).
 - **GitHub Actions:** workflow jest przygotowany; jego wykonanie zdalne będzie można potwierdzić po wypchnięciu commita. Lokalna walidacja projektu jest wykonywana przed commitem.
 - **Husky i lint-staged pominięte** jako opcjonalne.
 - Zmienne środowiskowe w CI nie są ustawiane; build działa bez konfiguracji Supabase.
@@ -48,12 +49,21 @@ Stan uzgodniony 27.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` je
 - Migracja `20261026231800_archive_animals_instead_of_deleting.sql` odbiera staffowi możliwość fizycznego usuwania zwierząt; została wdrożona do Supabase Cloud dev 26.10.2026. Zwierzęta można archiwizować przez `publication_status`.
 - Pełny zestaw integracyjny profili, zwierząt i zdjęć: 12 testów przeszło przeciwko Supabase dev 26.10.2026. `supabase/seed.sql` zawiera dane przykładowe dla lokalnego środowiska.
 
-### Etap 2 — w toku
+### Etap 2 — zakończony
 
 - Formularze rejestracji, logowania, resetu i zmiany hasła używają Server Actions oraz walidacji Zod po stronie serwera.
 - Callback wymienia jednorazowy kod na sesję. Serwerowy helper weryfikuje sesję przez `auth.getUser()` i odrzuca konta bez potwierdzonego e-maila; proxy odświeża sesję.
 - Chroniona trasa `/account` i helper roli staff korzystają z serwerowej weryfikacji. Testy walidacji formularzy i bezpiecznych przekierowań przechodzą.
-- Site URL, dozwolone przekierowania i potwierdzanie e-maila w Supabase Dashboard sprawdzono 27.10.2026. Pełny test potwierdzenia konta i resetu hasła pozostaje do wykonania: ponowna próba rejestracji zwróciła `over_email_send_rate_limit` (HTTP 429), a reset hasła nie został jeszcze zweryfikowany end-to-end. Trzeba rozwiązać limit wysyłki i ponowić przepływ.
+- Użytkownik ręcznie zweryfikował pełny przepływ rejestracji, potwierdzenia, logowania i resetu hasła z domyślną wysyłką Supabase 28.10.2026. Wcześniejszy błąd `over_email_send_rate_limit` (HTTP 429) nie wystąpił ponownie; własny SMTP odłożono.
+- Po zalogowaniu aplikacja odczytuje rolę z `profiles`: adopter trafia domyślnie do `/account`, a staff do `/admin`. Dozwolony lokalny parametr `next` ma pierwszeństwo, a chronione strony ponownie sprawdzają rolę.
+
+### Etap 3 — pierwszy przyrost panelu staff (w toku)
+
+- `/admin` jest wspólną powłoką panelu pracownika i na razie przekierowuje do pierwszej gotowej sekcji `/admin/animals`. Nawigacja zawiera tylko dostępny moduł „Zwierzęta”; zgłoszenia i metryki pojawią się, gdy będą wspierane przez kolejne funkcje.
+- Staff może wyświetlać listę zwierząt i tworzyć/edytować podstawowe dane oraz statusy publikacji i adopcji. Archiwizacja zmienia `publication_status`; panel nie wykonuje fizycznych usunięć.
+- Każda strona i Server Action w panelu sprawdza rolę staff po stronie serwera; zapis korzysta z sesji użytkownika i istniejącego RLS, bez `service_role`.
+- Formularz waliduje dane Zod po stronie serwera. Format, lint, typecheck i build przechodzą; 28.10.2026 pełny zestaw 22 testów przeszedł, w tym integracyjne testy RLS na Supabase dev. Ręczne sprawdzenie pełnego przepływu panelu w przeglądarce na koncie staff pozostaje do wykonania.
+- Upload do Supabase Storage, kolejność zdjęć i polityki bucketu pozostają osobnym przyrostem panelu; nie dodano migracji w tym kroku.
 
 ### Podjęte decyzje
 
@@ -63,16 +73,25 @@ Stan uzgodniony 27.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` je
 - Język MVP: wyłącznie polski; bez i18n.
 - Samodzielna rejestracja zawsze tworzy użytkownika z rolą `adopter`. Rola `staff` jest nadawana ręcznie przez administratora projektu przez SQL; nie będzie systemu zaproszeń w MVP.
 - Wymagane potwierdzenie e-maila przed logowaniem jest włączone w Supabase Auth (sprawdzone 27.10.2026). Szczegóły i konsekwencje opisano w sekcji [Uwierzytelnianie i potwierdzenie e-maila](#uwierzytelnianie-i-potwierdzenie-e-maila).
+- Staff i adopter logują się przez te same formularze Auth. Rola `profiles.role` kieruje staff domyślnie do wspólnego `/admin`, a adopterów do `/account`; role z user metadata nie są używane do autoryzacji.
+- Panel `/admin` rozwija się modułowo. Pierwszą sekcją są zwierzęta; kolejne pozycje nawigacji dodajemy wraz z gotowymi funkcjami, zamiast pokazywać niedziałające zakładki.
 - Hosting: Vercel + Supabase Cloud (zgodnie z planem; nie był przedmiotem osobnej rozmowy).
 
 ### Otwarte kwestie i konfiguracja
 
 - Zakres ankiety i ostateczna lista reguł dopasowania (do dopracowania w etapie 6).
-- Pełny przepływ e-mailowy Auth pozostaje niezweryfikowany z powodu błędu limitu wysyłki `over_email_send_rate_limit` (HTTP 429); trzeba ponowić test po rozwiązaniu problemu z wysyłką.
+- Upload zdjęć do Storage pozostaje do zaprojektowania i wdrożenia w osobnym przyroście panelu.
 
 ## Problem i podejście
 
-Platforma adopcyjna dla jednego schroniska: katalog zwierząt, konta adoptujących, rekomendacje regułowe, zgłoszenia adopcyjne ze statusami, panel pracownika. Supabase (Postgres + Auth + Storage + RLS). Budowa pionowymi przyrostami; bezpieczeństwo (RLS) i testy od pierwszego etapu.
+Platforma jednego schroniska, która prowadzi od poznania zwierzęcia do odpowiedzialnej obsługi adopcji: publiczny katalog, konto adoptującego, rekomendacje regułowe, zgłoszenie ze statusami i panel pracownika. Supabase (Postgres + Auth + Storage + RLS). Budowa pionowymi przyrostami; bezpieczeństwo (RLS) i testy od pierwszego etapu.
+
+### Mapa produktu i główne ścieżki
+
+- **Publicznie:** strona główna i katalog → profil zwierzęcia → rejestracja/logowanie, ulubione lub zgłoszenie adopcyjne. Katalog nadal korzysta z danych przykładowych; podłączenie go do bazy jest osobnym etapem.
+- **Adopter:** `/account` jest przestrzenią konta; profil, ulubione, preferencje i zgłoszenia są dodawane przyrostowo.
+- **Staff:** ten sam system logowania, ale domyślne wejście do wspólnego `/admin`. Panel ma nawigację modułową; początkowo dostępna jest sekcja „Zwierzęta”, później dojdą „Zgłoszenia”. `/admin` kieruje do pierwszej dostępnej sekcji, a strona publiczna pozostaje dostępna przez link z panelu.
+- **Zasada bezpieczeństwa:** menu i przekierowanie po zalogowaniu są UX-em, nie kontrolą dostępu. Każda chroniona strona i Server Action sprawdza rolę po stronie serwera, a uprawnienia do danych egzekwuje RLS. Staff nie uzyskuje roli przez rejestrację ani user metadata.
 
 Stan środowiska w chwili planowania: pusty katalog, Node 22 / npm 10, brak Dockera i Supabase CLI. Dlatego wybrano Supabase Cloud.
 
@@ -111,7 +130,7 @@ Stan zależności: zainstalowane są Next.js, Tailwind, shadcn/ui, `@supabase/ss
 
 **Przyjęte ustawienie:** Supabase Auth wymaga potwierdzenia e-maila przed dopuszczeniem do logowania; ustawienie sprawdzono w Dashboardzie 27.10.2026. Aplikacja nie uznaje konta za zweryfikowane na podstawie danych z formularza — stan weryfikacji pochodzi z Supabase Auth.
 
-**Konsekwencje dla developmentu:** ponieważ wybrano Supabase Cloud, lokalna aplikacja korzysta z tego samego projektu dev w chmurze, a nie z lokalnego serwera Auth/Inbucket. Site URL i dozwolone adresy callback/resetu sprawdzono w Dashboardzie. Każdy test rejestracji lub resetu wymaga dostępu do skrzynki i kliknięcia otrzymanego linku. Nie należy osłabiać potwierdzania e-maila; testy automatyczne powinny korzystać z kontrolowanego konta lub jawnie skonfigurowanego środowiska. Podczas ponownej próby rejestracji 27.10.2026 Supabase zwrócił `over_email_send_rate_limit` (HTTP 429); reset hasła również wymaga testu end-to-end. Przed zamknięciem etapu trzeba rozwiązać limit wysyłki (np. skonfigurować SMTP dla projektu dev) i ponowić testy.
+**Konsekwencje dla developmentu:** ponieważ wybrano Supabase Cloud, lokalna aplikacja korzysta z projektu dev w chmurze, a nie z lokalnego serwera Auth/Inbucket. Site URL i dozwolone adresy callback/resetu sprawdzono w Dashboardzie. Ręczne testy rejestracji, potwierdzenia, logowania i resetu hasła zostały potwierdzone 28.10.2026 przy użyciu domyślnej wysyłki Supabase. Nie należy osłabiać potwierdzania e-maila; przyszłe testy automatyczne powinny korzystać z kontrolowanego konta lub jawnie skonfigurowanego środowiska. Własny SMTP nie jest obecnie wymagany.
 
 ## Etap 0 — fundament (plan)
 
@@ -143,7 +162,7 @@ Etap 1 wymaga projektu Supabase dev (potwierdzony, `.env.local` skonfigurowany) 
 
 1. **Schemat i bezpieczeństwo:** migracje, enumy, RLS, trigger profili wymuszający rolę `adopter`, `is_staff()`, seed. Ręczne nadawanie staff przez SQL administratora projektu. Projektem docelowym jest Supabase Cloud dev; migracje wdrażamy po przeglądzie przez `supabase db push`, nigdy przez `db reset` na projekcie zdalnym. Przed wdrożeniem ustalamy powtarzalny sposób testowania RLS na rolach gościa, adopter A/B i staff. → testy RLS: gość widzi tylko published; adopter nie widzi cudzych danych i nie może zmienić swojej roli; staff ma uprawnienia operacyjne; próba samodzielnej eskalacji roli jest zablokowana.
 2. **Auth:** rejestracja, logowanie, reset hasła, wymagane potwierdzenie e-maila, proxy sesji (rozszerzenie `src/proxy.ts`), guardy tras. → E2E rejestracji obejmuje stan przed i po potwierdzeniu; niepotwierdzony użytkownik nie uzyskuje dostępu do chronionych funkcji; panel niedostępny dla adopter.
-3. **Panel staff — zwierzęta:** lista, formularz CRUD, publikacja/archiwizacja, upload i kolejność zdjęć. → staff dodaje zwierzę ze zdjęciem; walidacja pliku; adopter nie może uploadować.
+3. **Panel staff — zwierzęta:** wspólny shell `/admin`, lista oraz formularz tworzenia/edycji, statusy publikacji/adopcji i archiwizacja istniejących rekordów. Upload do Storage, kolejność zdjęć i polityki bucketu jako późniejszy przyrost tego modułu. → staff zarządza zwierzętami; adopter nie może wejść do panelu ani mutować rekordów; archiwizacja działa bez fizycznego usunięcia.
 4. **Katalog publiczny:** lista, filtry/sortowanie/paginacja, profil, galeria, SEO. → gość widzi tylko published; filtry w URL; Lighthouse/a11y bazowe.
 5. **Konto i ulubione:** profil, ulubione. → toggle ulubionych; widoczne tylko własne.
 6. **Ankieta i rekomendacje:** preferencje, silnik reguł, widok „dla Ciebie” z uzasadnieniem. → testy jednostkowe reguł (twarde wykluczenia, score, powody).
@@ -172,4 +191,4 @@ where id = (
 
 Skopiuj `.env.rls.example` do ignorowanego `.env.rls.local` i uzupełnij URL, klucz publiczny oraz adresy i hasła kont (testy nie czytają `.env.local`).
 
-Uruchom `npm test`. Testy sprawdzają brak dostępu gościa do profili, prywatność profili adopterów, blokadę eskalacji roli, odczyt profili przez staff oraz widoczność wyłącznie opublikowanych zwierząt i ich zdjęć dla gościa/adoptera. Test tworzy i usuwa własne rekordy zwierząt przez konto staff. Bez `.env.rls.local` testy RLS są pominięte. Przykładowe dane dla lokalnego środowiska są w `supabase/seed.sql`; nigdy nie używaj `supabase db reset` na projekcie Cloud.
+Uruchom `npm test`. Testy sprawdzają brak dostępu gościa do profili, prywatność profili adopterów, blokadę eskalacji roli, odczyt profili przez staff oraz widoczność wyłącznie opublikowanych zwierząt i ich zdjęć dla gościa/adoptera. Testy ponownie wykorzystują rekordy o stałych identyfikatorach: tworzą lub aktualizują zwierzęta i metadane zdjęć, a po sprawdzeniu archiwizują zwierzęta. Rekordy metadanych zdjęć pozostają w bazie dev. Bez wymaganych zmiennych w `.env.rls.local` testy RLS są pomijane. Przykładowe dane dla lokalnego środowiska są w `supabase/seed.sql`; nigdy nie używaj `supabase db reset` na projekcie Cloud.
