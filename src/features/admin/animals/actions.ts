@@ -60,14 +60,18 @@ export async function createAnimalAction(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("animals").insert(parsed.data);
+  const { data, error } = await supabase
+    .from("animals")
+    .insert(parsed.data)
+    .select("id")
+    .single();
 
   if (error) {
     return databaseErrorState("creation", error);
   }
 
   revalidatePath("/admin/animals");
-  redirect("/admin/animals");
+  redirect(`/admin/animals/${data.id}/edit`);
 }
 
 export async function updateAnimalAction(

@@ -4,7 +4,7 @@ Platforma adopcyjna dla jednego schroniska: katalog zwierząt, konta adoptujący
 
 **Stack:** Next.js (App Router) · TypeScript · Tailwind CSS · shadcn/ui · Supabase (Postgres, Auth, Storage, RLS). Plan i status etapów: [docs/plan.md](docs/plan.md). Decyzje: [docs/adr](docs/adr).
 
-**Status:** Etapy 1 (schemat i RLS) oraz 2 (Auth) są zakończone; użytkownik potwierdził ręczne testy rejestracji, potwierdzenia e-maila, logowania i resetu hasła. Etap 3 jest w toku: działa lokalny panel staff `/admin` z sekcją zarządzania zwierzętami, a testy integracyjne RLS przeszły na Supabase dev 28.10.2026. Ręczne sprawdzenie pełnego przepływu panelu w przeglądarce pozostaje do wykonania. Publiczny katalog UI nadal korzysta z danych przykładowych.
+**Status:** Etapy 1 (schemat i RLS), 2 (Auth) i 3 (panel staff — zwierzęta i zdjęcia) są zakończone. Użytkownik potwierdził ręczne testy przepływu e-mailowego oraz pełny test panelu i zarządzania zdjęciami 29.10.2026. Wszystkie 29 testów, w tym integracyjne testy RLS na Supabase dev, przeszły. Publiczny katalog UI nadal korzysta z danych przykładowych.
 
 ## Uruchomienie
 
@@ -55,15 +55,17 @@ Konfigurację testów trzymaj w osobnym, ignorowanym przez Git pliku `.env.rls.l
 cp .env.rls.example .env.rls.local   # uzupełnij URL, klucz publiczny i dane trzech kont
 ```
 
-Testy nie czytają `.env.local`. Używaj wyłącznie projektu dev i nie dodawaj klucza `service_role`. Test uruchomisz przez `npm test`. Gdy `.env.rls.local` lub jego zmiennych brakuje, testy RLS są pomijane. Pełny zestaw 22 testów, w tym integracyjne testy RLS, przeszedł na Supabase dev 28.10.2026. Test zwierząt wymaga wdrożonych migracji `create_animals` oraz `archive_animals_instead_of_deleting`; korzysta z ponownie używanych rekordów testowych, które po teście są archiwizowane. Sprawdza, że gość i adopter widzą wyłącznie zwierzęta opublikowane, zdjęcia dziedziczą tę widoczność, adopter nie może dodawać danych, staff widzi również wersje robocze, a zwierzęta można archiwizować, ale nie fizycznie usuwać przez API.
+Testy nie czytają `.env.local`. Używaj wyłącznie projektu dev i nie dodawaj klucza `service_role`. Test uruchomisz przez `npm test`. Gdy `.env.rls.local` lub jego zmiennych brakuje, testy RLS są pomijane. Zestaw 29 testów, w tym integracyjne testy RLS, przeszedł na Supabase dev 29.10.2026. Test zwierząt i zdjęć wymaga wdrożonych migracji `create_animals`, `archive_animals_instead_of_deleting`, `add_animal_photo_storage` oraz `fix_animal_photo_storage_policies`. Testy sprawdzają widoczność opublikowanych zwierząt i metadanych zdjęć, staff-only zapis/zmianę/usuwanie plików Storage, publiczny odczyt obiektów, ograniczenie liczby zdjęć i kolejność. Testowe rekordy metadanych są usuwane, a testowe zwierzęta archiwizowane. Nie uruchamiaj `supabase db reset` na projekcie Cloud.
 
-Przykładowe dane zwierząt są w `supabase/seed.sql` i są ładowane przez lokalne `supabase db reset`. Nie uruchamiaj `db reset` na projekcie Cloud.
+Przykładowe dane zwierząt są w `supabase/seed.sql` i są ładowane przez lokalne `supabase db reset`.
 
 ## Panel pracownika
 
 Personel używa tego samego formularza logowania co adoptujący. Po zalogowaniu aplikacja odczytuje rolę z `profiles`: staff trafia domyślnie do `/admin`, a adopter do `/account`. `/admin` jest wspólną powłoką panelu i przekierowuje do pierwszej dostępnej sekcji `/admin/animals`. Kolejne moduły, np. obsługa zgłoszeń, pojawią się wraz z implementacją tych funkcji.
 
 Widoczność linków i przekierowania służą nawigacji, nie autoryzacji. Każda strona i Server Action panelu weryfikuje rolę staff na serwerze, a dostęp do danych dodatkowo ogranicza RLS. Rejestracja publiczna zawsze tworzy rolę `adopter`.
+
+W edycji zwierzęcia staff może dodać do 10 zdjęć JPEG/PNG/WebP (maks. 5 MiB każde), ustawić ich kolejność i tekst alternatywny oraz usunąć zdjęcia. Nowe zwierzę po zapisie przechodzi do edycji, gdzie można dodać zdjęcia. Bucket `animal-photos` jest publiczny: sam plik jest dostępny dla każdego, kto zna jego URL, również przed publikacją zwierzęcia. Upload i usuwanie wymagają roli staff po stronie serwera i polityk Storage; metadane podlegają RLS. Migracje bucketu i polityk znajdują się w `supabase/migrations/`.
 
 ## Uwierzytelnianie
 

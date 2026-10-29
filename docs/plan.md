@@ -5,15 +5,15 @@ Sekcje „Plan” opisują zamierzony stan. Sekcja [Status realizacji](#status-r
 
 ## Status realizacji
 
-Stan na 28.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` jest skonfigurowany, a lokalne połączenie zweryfikowane. CLI jest zalogowane i repo podlinkowane.
+Stan na 29.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` jest skonfigurowany, a lokalne połączenie zweryfikowane. CLI jest zalogowane i repo podlinkowane.
 
-| Etap         | Status                                                                                             |
-| ------------ | -------------------------------------------------------------------------------------------------- |
-| 0. Fundament | Gotowy; połączenie z Supabase Cloud dev zweryfikowane lokalnie                                     |
-| 1. Schemat   | Gotowy; profile, zwierzęta, zdjęcia i RLS wdrożone, testy integracyjne zdane                       |
-| 2. Auth      | Gotowy; implementacja i ręczne testy E2E przepływu e-mailowego potwierdzone przez użytkownika      |
-| 3. Panel     | W toku; moduł zwierząt działa lokalnie, testy RLS przeszły w Supabase dev, ręczny test UI pozostał |
-| 4–9          | Nie rozpoczęte                                                                                     |
+| Etap         | Status                                                                                            |
+| ------------ | ------------------------------------------------------------------------------------------------- |
+| 0. Fundament | Gotowy; połączenie z Supabase Cloud dev zweryfikowane lokalnie                                    |
+| 1. Schemat   | Gotowy; profile, zwierzęta, zdjęcia i RLS wdrożone, testy integracyjne zdane                      |
+| 2. Auth      | Gotowy; implementacja i ręczne testy E2E przepływu e-mailowego potwierdzone przez użytkownika     |
+| 3. Panel     | Gotowy; zarządzanie zwierzętami i zdjęciami wdrożone do Supabase dev, ręczny test UI potwierdzony |
+| 4–9          | Nie rozpoczęte                                                                                    |
 
 ### Etap 0 — wykonane i zweryfikowane
 
@@ -26,7 +26,7 @@ Stan na 28.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` jest skonf
 
 ### Do wykonania przed kolejnymi etapami
 
-- **Kolejne tabele:** każda nowa tabela i funkcja musi otrzymać jawne uprawnienia, RLS i testy dla gościa/adopterów/staff; aktualne testy profili i zwierząt przechodzą na Supabase dev.
+- **Kolejne tabele i zasoby:** każda nowa tabela i polityka Storage musi otrzymać jawne uprawnienia, RLS i testy dla gościa/adopterów/staff; testy profili, zwierząt i zdjęć przechodzą na Supabase dev.
 - **Supabase Auth:** Site URL, dozwolone adresy przekierowań i wymagane potwierdzanie e-maila sprawdzono w Dashboardzie 27.10.2026. Użytkownik potwierdził 28.10.2026, że rejestracja, potwierdzenie e-maila, logowanie i reset hasła działają z domyślną wysyłką Supabase. Własny SMTP nie jest obecnie potrzebny. Callback aplikacji to `/auth/callback`; pełny adres musi odpowiadać `NEXT_PUBLIC_SITE_URL` (lokalnie port 3000 lub faktyczny port dev).
 - **GitHub Actions:** workflow jest przygotowany; jego wykonanie zdalne będzie można potwierdzić po wypchnięciu commita. Lokalna walidacja projektu jest wykonywana przed commitem.
 - **Husky i lint-staged pominięte** jako opcjonalne.
@@ -57,13 +57,15 @@ Stan na 28.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` jest skonf
 - Użytkownik ręcznie zweryfikował pełny przepływ rejestracji, potwierdzenia, logowania i resetu hasła z domyślną wysyłką Supabase 28.10.2026. Wcześniejszy błąd `over_email_send_rate_limit` (HTTP 429) nie wystąpił ponownie; własny SMTP odłożono.
 - Po zalogowaniu aplikacja odczytuje rolę z `profiles`: adopter trafia domyślnie do `/account`, a staff do `/admin`. Dozwolony lokalny parametr `next` ma pierwszeństwo, a chronione strony ponownie sprawdzają rolę.
 
-### Etap 3 — pierwszy przyrost panelu staff (w toku)
+### Etap 3 — panel staff: zwierzęta i zdjęcia (zakończony)
 
 - `/admin` jest wspólną powłoką panelu pracownika i na razie przekierowuje do pierwszej gotowej sekcji `/admin/animals`. Nawigacja zawiera tylko dostępny moduł „Zwierzęta”; zgłoszenia i metryki pojawią się, gdy będą wspierane przez kolejne funkcje.
-- Staff może wyświetlać listę zwierząt i tworzyć/edytować podstawowe dane oraz statusy publikacji i adopcji. Archiwizacja zmienia `publication_status`; panel nie wykonuje fizycznych usunięć.
+- Staff może wyświetlać listę zwierząt i tworzyć/edytować podstawowe dane oraz statusy publikacji i adopcji. Archiwizacja zmienia `publication_status`; panel nie wykonuje fizycznych usunięć. Użytkownik potwierdził ręczny test panelu 29.10.2026.
 - Każda strona i Server Action w panelu sprawdza rolę staff po stronie serwera; zapis korzysta z sesji użytkownika i istniejącego RLS, bez `service_role`.
-- Formularz waliduje dane Zod po stronie serwera. Format, lint, typecheck i build przechodzą; 28.10.2026 pełny zestaw 22 testów przeszedł, w tym integracyjne testy RLS na Supabase dev. Ręczne sprawdzenie pełnego przepływu panelu w przeglądarce na koncie staff pozostaje do wykonania.
-- Upload do Supabase Storage, kolejność zdjęć i polityki bucketu pozostają osobnym przyrostem panelu; nie dodano migracji w tym kroku.
+- Formularz waliduje dane Zod po stronie serwera. Użytkownik potwierdził ręczne sprawdzenie panelu i pełnego przepływu zdjęć na koncie staff 29.10.2026.
+- Migracja `20261029150000_add_animal_photo_storage.sql` tworzy publiczny bucket `animal-photos`, polityki Storage dla staff, limit 5 MiB i whitelistę JPEG/PNG/WebP; wymusza limit 10 metadanych zdjęć na zwierzę przez trigger i udostępnia transakcyjną funkcję zmiany kolejności. Migracja `20261029152900_fix_animal_photo_storage_policies.sql` kwalifikuje nazwę obiektu w politykach, aby ograniczenie ścieżki sprawdzało ID zwierzęcia, a nie kolumnę `animals.name`. Obie migracje wdrożono do Supabase Cloud dev 29.10.2026.
+- Staff może dodawać zdjęcia z walidacją typu MIME, sygnatury pliku, rozmiaru i tekstu alternatywnego, ustawiać kolejność, edytować tekst alternatywny i usuwać plik wraz z metadanymi. Po utworzeniu zwierzęcia panel przechodzi do jego edycji. Pliki publicznego bucketu są dostępne po poznaniu URL także dla szkiców; dostęp do listowania i mutacji Storage pozostaje ograniczony RLS.
+- 29 testów, w tym integracyjne testy RLS Storage i metadanych na Supabase dev, przeszło 29.10.2026. Lint, typecheck, format check i build przechodzą.
 
 ### Podjęte decyzje
 
@@ -80,7 +82,6 @@ Stan na 28.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` jest skonf
 ### Otwarte kwestie i konfiguracja
 
 - Zakres ankiety i ostateczna lista reguł dopasowania (do dopracowania w etapie 6).
-- Upload zdjęć do Storage pozostaje do zaprojektowania i wdrożenia w osobnym przyroście panelu.
 
 ## Problem i podejście
 
@@ -117,7 +118,7 @@ Stan zależności: zainstalowane są Next.js, Tailwind, shadcn/ui, `@supabase/ss
 - Rola w `profiles.role` (`adopter` | `staff`); rola `adopter` jest wartością domyślną nadawaną przez bazę przy tworzeniu profilu. Nie ufamy roli z user metadata ani danym wejściowym z klienta. Nadanie `staff` jest ręczne przez administratora projektu w SQL; nie ma systemu zaproszeń w MVP.
 - `is_staff()` (security definer) może być helperem do polityk RLS, z ograniczonym `search_path` i minimalnymi uprawnieniami. Polityki muszą uniemożliwiać użytkownikowi samodzielną zmianę `profiles.role` i eskalację uprawnień; uprawnienia egzekwuje baza, nie ukrywanie elementów UI. Trigger tworzy profil z rolą `adopter` po rejestracji.
 - Tabele: `profiles`, `animals` (cechy jako kolumny/enumy), `animal_photos`, `favorites`, `adopter_preferences`, `applications`, `application_status_history`, `staff_notes`. Osobne `traits` + `animal_traits` tylko gdy będzie uzasadnione.
-- `animals` rozdziela `publication_status` (`draft`, `published`, `archived`) od `adoption_status` (`available`, `meeting`, `adopted`); publiczne role widzą tylko opublikowane rekordy. `animal_photos` przechowuje metadane i ścieżkę obiektu; upload i polityki Storage są osobnym przyrostem panelu staff.
+- `animals` rozdziela `publication_status` (`draft`, `published`, `archived`) od `adoption_status` (`available`, `meeting`, `adopted`); publiczne role widzą tylko opublikowane rekordy. `animal_photos` przechowuje metadane i ścieżkę obiektu; upload i polityki Storage są częścią panelu staff.
 - Statusy jako enumy Postgresa; zmiana statusu zgłoszenia przez funkcję RPC (walidacja przejść + wpis do historii w jednej transakcji).
 - Unikalność: jedno aktywne zgłoszenie na parę (user, zwierzę) — partial unique index.
 - Dopasowanie: czysta funkcja TypeScript (testowalna), zwraca score + powody; liczona po stronie serwera, nie przechowywana.
@@ -162,7 +163,7 @@ Etap 1 wymaga projektu Supabase dev (potwierdzony, `.env.local` skonfigurowany) 
 
 1. **Schemat i bezpieczeństwo:** migracje, enumy, RLS, trigger profili wymuszający rolę `adopter`, `is_staff()`, seed. Ręczne nadawanie staff przez SQL administratora projektu. Projektem docelowym jest Supabase Cloud dev; migracje wdrażamy po przeglądzie przez `supabase db push`, nigdy przez `db reset` na projekcie zdalnym. Przed wdrożeniem ustalamy powtarzalny sposób testowania RLS na rolach gościa, adopter A/B i staff. → testy RLS: gość widzi tylko published; adopter nie widzi cudzych danych i nie może zmienić swojej roli; staff ma uprawnienia operacyjne; próba samodzielnej eskalacji roli jest zablokowana.
 2. **Auth:** rejestracja, logowanie, reset hasła, wymagane potwierdzenie e-maila, proxy sesji (rozszerzenie `src/proxy.ts`), guardy tras. → E2E rejestracji obejmuje stan przed i po potwierdzeniu; niepotwierdzony użytkownik nie uzyskuje dostępu do chronionych funkcji; panel niedostępny dla adopter.
-3. **Panel staff — zwierzęta:** wspólny shell `/admin`, lista oraz formularz tworzenia/edycji, statusy publikacji/adopcji i archiwizacja istniejących rekordów. Upload do Storage, kolejność zdjęć i polityki bucketu jako późniejszy przyrost tego modułu. → staff zarządza zwierzętami; adopter nie może wejść do panelu ani mutować rekordów; archiwizacja działa bez fizycznego usunięcia.
+3. **Panel staff — zwierzęta:** wspólny shell `/admin`, lista oraz formularz tworzenia/edycji, statusy publikacji/adopcji, archiwizacja istniejących rekordów oraz zdjęcia w Storage z kolejnością i politykami bucketu. → staff zarządza zwierzętami i zdjęciami; adopter nie może wejść do panelu ani mutować rekordów; archiwizacja działa bez fizycznego usunięcia.
 4. **Katalog publiczny:** lista, filtry/sortowanie/paginacja, profil, galeria, SEO. → gość widzi tylko published; filtry w URL; Lighthouse/a11y bazowe.
 5. **Konto i ulubione:** profil, ulubione. → toggle ulubionych; widoczne tylko własne.
 6. **Ankieta i rekomendacje:** preferencje, silnik reguł, widok „dla Ciebie” z uzasadnieniem. → testy jednostkowe reguł (twarde wykluczenia, score, powody).

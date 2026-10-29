@@ -2,8 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { AnimalForm } from "@/features/admin/animals/animal-form";
+import { AnimalPhotoManager } from "@/features/admin/animals/animal-photo-manager";
 import { updateAnimalAction } from "@/features/admin/animals/actions";
 import { animalRecordSchema } from "@/features/admin/animals/schema";
+import {
+  ANIMAL_PHOTO_BUCKET,
+  animalPhotoSchema,
+} from "@/features/admin/animals/photo-schema";
 import { requireStaff } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -44,6 +49,27 @@ export default async function EditAnimalPage({
   }
   const animal = parsedAnimal.data;
   const action = updateAnimalAction.bind(null, animal.id);
+  const { data: photoData, error: photosError } = await supabase
+    .from("animal_photos")
+    .select("id, animal_id, storage_path, alt_text, display_order, created_at")
+    .eq("animal_id", animal.id)
+    .order("display_order", { ascending: true });
+
+  if (photosError) {
+    throw new Error(`Nie udało się pobrać zdjęć zwierzęcia: ${photosError.message}`);
+  }
+
+  const parsedPhotos = animalPhotoSchema.array().safeParse(photoData ?? []);
+  if (!parsedPhotos.success) {
+    throw new Error(
+      `Supabase zwrócił nieprawidłowe dane zdjęć: ${parsedPhotos.error.message}`,
+    );
+  }
+  const photos = parsedPhotos.data.map((photo) => ({
+    ...photo,
+    publicUrl: supabase.storage.from(ANIMAL_PHOTO_BUCKET).getPublicUrl(photo.storage_path)
+      .data.publicUrl,
+  }));
 
   return (
     <section>
@@ -54,13 +80,14 @@ export default async function EditAnimalPage({
         ← Wróć do zwierząt
       </Link>
       <h1 className="font-heading mt-4 text-3xl font-semibold tracking-tight">
-        Edytuj: {data.name}
+        Edytuj: {animal.name}
       </h1>
       <p className="text-muted-foreground mt-2">
         Zmiany wprowadzone tutaj dotyczą profilu zwierzęcia.
       </p>
       <div className="bg-card border-border mt-8 rounded-2xl border p-5 sm:p-8">
         <AnimalForm action={action} animal={animal} />
+        <AnimalPhotoManager animalId={animal.id} photos={photos} />
       </div>
     </section>
   );

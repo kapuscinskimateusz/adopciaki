@@ -27,6 +27,13 @@ const publishedAnimalId = "70000000-0000-4000-8000-000000000001";
 const draftAnimalId = "70000000-0000-4000-8000-000000000002";
 const publishedPhotoId = "71000000-0000-4000-8000-000000000001";
 const draftPhotoId = "71000000-0000-4000-8000-000000000002";
+const additionalPublishedPhotoId = "71000000-0000-4000-8000-000000000003";
+const overflowPhotoId = "73000000-0000-4000-8000-000000000001";
+const storageTestPath = `${draftAnimalId}/rls-storage-test.webp`;
+const photoLimitTestIds = Array.from(
+  { length: 8 },
+  (_, index) => `72000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
+);
 
 const publicTestIsConfigured = Boolean(supabaseUrl && anonKey);
 const testIsConfigured = Boolean(
@@ -148,14 +155,23 @@ describe.skipIf(!testIsConfigured)("profile row-level security", () => {
         {
           id: publishedPhotoId,
           animal_id: publishedAnimalId,
-          storage_path: "rls-tests/published.webp",
+          storage_path: `${publishedAnimalId}/${publishedPhotoId}.webp`,
           alt_text: "Test photo for a published animal.",
+          display_order: 0,
         },
         {
           id: draftPhotoId,
           animal_id: draftAnimalId,
-          storage_path: "rls-tests/draft.webp",
+          storage_path: `${draftAnimalId}/${draftPhotoId}.webp`,
           alt_text: "Test photo for a draft animal.",
+          display_order: 0,
+        },
+        {
+          id: additionalPublishedPhotoId,
+          animal_id: publishedAnimalId,
+          storage_path: `${publishedAnimalId}/${additionalPublishedPhotoId}.webp`,
+          alt_text: "Additional test photo for a published animal.",
+          display_order: 1,
         },
       ],
       { onConflict: "id" },
@@ -171,12 +187,37 @@ describe.skipIf(!testIsConfigured)("profile row-level security", () => {
       return;
     }
 
-    const { error } = await staff.client
+    const cleanupErrors: string[] = [];
+    const { error: storageError } = await staff.client.storage
+      .from("animal-photos")
+      .remove([storageTestPath]);
+    if (storageError) {
+      cleanupErrors.push(`Storage: ${storageError.message}`);
+    }
+
+    const { error: photosError } = await staff.client
+      .from("animal_photos")
+      .delete()
+      .in("id", [
+        publishedPhotoId,
+        draftPhotoId,
+        additionalPublishedPhotoId,
+        overflowPhotoId,
+        ...photoLimitTestIds,
+      ]);
+    if (photosError) {
+      cleanupErrors.push(`Metadane zdjęć: ${photosError.message}`);
+    }
+
+    const { error: animalsError } = await staff.client
       .from("animals")
       .update({ publication_status: "archived" })
       .in("id", [publishedAnimalId, draftAnimalId]);
-    if (error) {
-      throw new Error(`Nie udało się zarchiwizować zwierząt testowych: ${error.message}`);
+    if (animalsError) {
+      cleanupErrors.push(`Zwierzęta testowe: ${animalsError.message}`);
+    }
+    if (cleanupErrors.length > 0) {
+      throw new Error(`Nie udało się posprzątać danych RLS: ${cleanupErrors.join("; ")}`);
     }
   });
 
@@ -323,6 +364,140 @@ describe.skipIf(!testIsConfigured)("profile row-level security", () => {
     expect(updatedPhoto?.id).toBe(draftPhotoId);
   });
 
+  it("limits Storage writes to staff and keeps public photo objects downloadable", async () => {
+    const imageBytes = new Uint8Array([
+      0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50,
+    ]);
+    const { error: staffUploadError } = await staff.client.storage
+      .from("animal-photos")
+      .upload(storageTestPath, imageBytes, {
+        contentType: "image/webp",
+        upsert: true,
+      });
+    const { error: adopterUploadError } = await adopterA.client.storage
+      .from("animal-photos")
+      .upload(`${draftAnimalId}/adopter-forbidden.webp`, imageBytes, {
+        contentType: "image/webp",
+      });
+    const anonymousClient = createTestClient(required(anonKey, "SUPABASE_RLS_ANON_KEY"));
+    const { error: anonymousUploadError } = await anonymousClient.storage
+      .from("animal-photos")
+      .upload(`${draftAnimalId}/anonymous-forbidden.webp`, imageBytes, {
+        contentType: "image/webp",
+      });
+    const { error: invalidAnimalUploadError } = await staff.client.storage
+      .from("animal-photos")
+      .upload(`${randomUUID()}/unrelated.webp`, imageBytes, {
+        contentType: "image/webp",
+      });
+    const { data: staffFiles, error: staffListError } = await staff.client.storage
+      .from("animal-photos")
+      .list(draftAnimalId);
+    const { data: adopterFiles, error: adopterListError } = await adopterA.client.storage
+      .from("animal-photos")
+      .list(draftAnimalId);
+    const { data: anonymousFiles, error: anonymousListError } =
+      await anonymousClient.storage.from("animal-photos").list(draftAnimalId);
+    const publicUrl = `${
+      anonymousClient.storage.from("animal-photos").getPublicUrl(storageTestPath).data
+        .publicUrl
+    }?verification=${randomUUID()}`;
+    const publicResponse = await fetch(publicUrl);
+    const publicImageBytes = new Uint8Array(await publicResponse.arrayBuffer());
+    const { error: adopterUpdateError } = await adopterA.client.storage
+      .from("animal-photos")
+      .update(storageTestPath, imageBytes, { contentType: "image/webp" });
+    const { error: staffUpdateError } = await staff.client.storage
+      .from("animal-photos")
+      .update(storageTestPath, imageBytes, { contentType: "image/webp" });
+    const { error: adopterDeleteError } = await adopterA.client.storage
+      .from("animal-photos")
+      .remove([storageTestPath]);
+    const { data: filesAfterAdopterDelete } = await staff.client.storage
+      .from("animal-photos")
+      .list(draftAnimalId);
+    const { error: staffDeleteError } = await staff.client.storage
+      .from("animal-photos")
+      .remove([storageTestPath]);
+
+    expect(staffUploadError).toBeNull();
+    expect(adopterUploadError).not.toBeNull();
+    expect(anonymousUploadError).not.toBeNull();
+    expect(invalidAnimalUploadError).not.toBeNull();
+    expect(staffListError).toBeNull();
+    expect(staffFiles?.map((file) => file.name)).toContain("rls-storage-test.webp");
+    expect(adopterListError).toBeNull();
+    expect(adopterFiles?.map((file) => file.name)).not.toContain("rls-storage-test.webp");
+    expect(anonymousListError).toBeNull();
+    expect(anonymousFiles?.map((file) => file.name)).not.toContain(
+      "rls-storage-test.webp",
+    );
+    expect(adopterUpdateError).not.toBeNull();
+    expect(staffUpdateError).toBeNull();
+    expect(publicResponse.ok).toBe(true);
+    expect(publicImageBytes).toEqual(imageBytes);
+    expect(adopterDeleteError).toBeNull();
+    expect(filesAfterAdopterDelete?.map((file) => file.name)).toContain(
+      "rls-storage-test.webp",
+    );
+    expect(staffDeleteError).toBeNull();
+  });
+
+  it("reorders all animal photos atomically and denies adopters", async () => {
+    const { error: reorderError } = await staff.client.rpc("reorder_animal_photos", {
+      p_animal_id: publishedAnimalId,
+      p_photo_ids: [additionalPublishedPhotoId, publishedPhotoId],
+    });
+    const { data: reorderedPhotos, error: readError } = await staff.client
+      .from("animal_photos")
+      .select("id, display_order")
+      .eq("animal_id", publishedAnimalId)
+      .order("display_order", { ascending: true });
+    const { error: adopterReorderError } = await adopterA.client.rpc(
+      "reorder_animal_photos",
+      {
+        p_animal_id: publishedAnimalId,
+        p_photo_ids: [publishedPhotoId, additionalPublishedPhotoId],
+      },
+    );
+
+    expect(reorderError).toBeNull();
+    expect(readError).toBeNull();
+    expect(reorderedPhotos).toEqual([
+      { id: additionalPublishedPhotoId, display_order: 0 },
+      { id: publishedPhotoId, display_order: 1 },
+    ]);
+    expect(adopterReorderError).not.toBeNull();
+  });
+
+  it("enforces the ten-photo maximum in the database", async () => {
+    const { error: fillError } = await staff.client.from("animal_photos").insert(
+      photoLimitTestIds.map((id, index) => ({
+        id,
+        animal_id: publishedAnimalId,
+        storage_path: `${publishedAnimalId}/${id}.webp`,
+        alt_text: `Limit test photo ${index + 1}.`,
+        display_order: index + 2,
+      })),
+    );
+    const { error: overflowError } = await staff.client.from("animal_photos").insert({
+      id: overflowPhotoId,
+      animal_id: publishedAnimalId,
+      storage_path: `${publishedAnimalId}/${overflowPhotoId}.webp`,
+      alt_text: "Overflow test photo.",
+      display_order: 10,
+    });
+    const { count, error: countError } = await staff.client
+      .from("animal_photos")
+      .select("id", { count: "exact", head: true })
+      .eq("animal_id", publishedAnimalId);
+
+    expect(fillError).toBeNull();
+    expect(overflowError).not.toBeNull();
+    expect(countError).toBeNull();
+    expect(count).toBe(10);
+  });
+
   it("does not let adopters create animals or animal photos", async () => {
     const { error: animalError } = await adopterA.client.from("animals").insert({
       slug: `rls-forbidden-${randomUUID()}`,
@@ -339,9 +514,31 @@ describe.skipIf(!testIsConfigured)("profile row-level security", () => {
       storage_path: `rls-tests/forbidden-${randomUUID()}.webp`,
       alt_text: "This insert must be denied.",
     });
+    const { data: updatedPhoto, error: photoUpdateError } = await adopterA.client
+      .from("animal_photos")
+      .update({ alt_text: "This update must be denied." })
+      .eq("id", publishedPhotoId)
+      .select("id")
+      .maybeSingle();
+    const { data: deletedPhotos, error: photoDeleteError } = await adopterA.client
+      .from("animal_photos")
+      .delete()
+      .eq("id", publishedPhotoId)
+      .select("id");
+    const { data: unchangedPhoto, error: unchangedPhotoError } = await adopterA.client
+      .from("animal_photos")
+      .select("id, alt_text")
+      .eq("id", publishedPhotoId)
+      .single();
 
     expect(animalError).not.toBeNull();
     expect(photoError).not.toBeNull();
+    expect(photoUpdateError).toBeNull();
+    expect(updatedPhoto).toBeNull();
+    expect(photoDeleteError).toBeNull();
+    expect(deletedPhotos).toEqual([]);
+    expect(unchangedPhotoError).toBeNull();
+    expect(unchangedPhoto?.alt_text).toBe("Test photo for a published animal.");
   });
 
   it("archives animals and prevents staff from physically deleting them", async () => {

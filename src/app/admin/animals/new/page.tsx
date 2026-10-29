@@ -18,7 +18,7 @@ export default async function NewAnimalPage() {
         Dodaj zwierzę
       </h1>
       <p className="text-muted-foreground mt-2">
-        Uzupełnij dane profilu. Zwierzę możesz opublikować teraz lub później.
+        Uzupełnij dane profilu. Po zapisaniu dodasz zdjęcia i ustawisz ich kolejność.
       </p>
       <div className="bg-card border-border mt-8 rounded-2xl border p-5 sm:p-8">
         <AnimalForm action={createAnimalAction} />
