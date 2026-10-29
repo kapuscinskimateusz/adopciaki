@@ -571,3 +571,176 @@ describe.skipIf(!testIsConfigured)("profile row-level security", () => {
     });
   });
 });
+
+describe.skipIf(!testIsConfigured)("favorites row-level security", () => {
+  const favoriteAnimalId = "74000000-0000-4000-8000-000000000001";
+  const favoriteDraftAnimalId = "74000000-0000-4000-8000-000000000002";
+  let adopterA: TestUser;
+  let adopterB: TestUser;
+  let staff: TestUser;
+
+  beforeAll(async () => {
+    [adopterA, adopterB, staff] = await Promise.all([
+      signIn(
+        required(adopterAEmail, "SUPABASE_RLS_ADOPTER_A_EMAIL"),
+        required(adopterAPassword, "SUPABASE_RLS_ADOPTER_A_PASSWORD"),
+      ),
+      signIn(
+        required(adopterBEmail, "SUPABASE_RLS_ADOPTER_B_EMAIL"),
+        required(adopterBPassword, "SUPABASE_RLS_ADOPTER_B_PASSWORD"),
+      ),
+      signIn(
+        required(staffEmail, "SUPABASE_RLS_STAFF_EMAIL"),
+        required(staffPassword, "SUPABASE_RLS_STAFF_PASSWORD"),
+      ),
+    ]);
+
+    const { error } = await staff.client.from("animals").upsert(
+      [
+        {
+          id: favoriteAnimalId,
+          slug: "rls-favorite-published-test",
+          name: "RLS favorite published",
+          species: "dog",
+          breed: "Test",
+          age_months: 24,
+          sex: "unknown",
+          size: "medium",
+          energy_level: 3,
+          description: "Test record for favorites RLS.",
+          publication_status: "published",
+        },
+        {
+          id: favoriteDraftAnimalId,
+          slug: "rls-favorite-draft-test",
+          name: "RLS favorite draft",
+          species: "cat",
+          breed: "Test",
+          age_months: 12,
+          sex: "unknown",
+          size: "small",
+          energy_level: 2,
+          description: "Test record for favorites RLS.",
+          publication_status: "draft",
+        },
+      ],
+      { onConflict: "id" },
+    );
+    if (error) {
+      throw new Error(
+        `Nie udało się utworzyć zwierząt testowych dla ulubionych: ${error.message}`,
+      );
+    }
+
+    // Wpisy z poprzednich przebiegów mogłyby zafałszować wyniki.
+    await Promise.all(
+      [adopterA, adopterB].map((user) =>
+        user.client.from("favorites").delete().eq("user_id", user.id),
+      ),
+    );
+  });
+
+  afterAll(async () => {
+    if (!adopterA || !adopterB || !staff) return;
+
+    await Promise.all(
+      [adopterA, adopterB].map((user) =>
+        user.client.from("favorites").delete().eq("user_id", user.id),
+      ),
+    );
+    await staff.client
+      .from("animals")
+      .update({ publication_status: "archived" })
+      .in("id", [favoriteAnimalId, favoriteDraftAnimalId]);
+  });
+
+  it("does not let guests access favorites", async () => {
+    const anonymousClient = createTestClient(required(anonKey, "SUPABASE_RLS_ANON_KEY"));
+    const { error: selectError } = await anonymousClient
+      .from("favorites")
+      .select("animal_id")
+      .limit(1);
+    const { error: insertError } = await anonymousClient
+      .from("favorites")
+      .insert({ animal_id: favoriteAnimalId });
+
+    expect(selectError).not.toBeNull();
+    expect(insertError).not.toBeNull();
+  });
+
+  it("lets an adopter favorite a published animal and read only their own favorites", async () => {
+    const { error: insertError } = await adopterA.client
+      .from("favorites")
+      .insert({ animal_id: favoriteAnimalId });
+    const { data: ownFavorites, error: ownError } = await adopterA.client
+      .from("favorites")
+      .select("user_id, animal_id");
+    const { data: foreignView, error: foreignError } = await adopterB.client
+      .from("favorites")
+      .select("user_id, animal_id");
+    const { data: staffView, error: staffError } = await staff.client
+      .from("favorites")
+      .select("user_id")
+      .eq("animal_id", favoriteAnimalId);
+
+    expect(insertError).toBeNull();
+    expect(ownError).toBeNull();
+    expect(ownFavorites).toEqual([{ user_id: adopterA.id, animal_id: favoriteAnimalId }]);
+    expect(foreignError).toBeNull();
+    expect(foreignView).toEqual([]);
+    expect(staffError).toBeNull();
+    expect(staffView).toEqual([]);
+  });
+
+  it("rejects duplicates, impersonation and unpublished animals", async () => {
+    const { error: duplicateError } = await adopterA.client
+      .from("favorites")
+      .insert({ animal_id: favoriteAnimalId });
+    const { error: impersonationError } = await adopterB.client
+      .from("favorites")
+      .insert({ user_id: adopterA.id, animal_id: favoriteAnimalId });
+    const { error: draftError } = await adopterA.client
+      .from("favorites")
+      .insert({ animal_id: favoriteDraftAnimalId });
+
+    expect(duplicateError).not.toBeNull();
+    expect(impersonationError).not.toBeNull();
+    expect(draftError).not.toBeNull();
+  });
+
+  it("does not allow updating favorites or deleting someone else's", async () => {
+    const { error: updateError } = await adopterA.client
+      .from("favorites")
+      .update({ animal_id: favoriteDraftAnimalId })
+      .eq("animal_id", favoriteAnimalId);
+    const { data: foreignDeleted, error: foreignDeleteError } = await adopterB.client
+      .from("favorites")
+      .delete()
+      .eq("user_id", adopterA.id)
+      .select("animal_id");
+    const { data: stillThere } = await adopterA.client
+      .from("favorites")
+      .select("animal_id");
+
+    expect(updateError).not.toBeNull();
+    expect(foreignDeleteError).toBeNull();
+    expect(foreignDeleted).toEqual([]);
+    expect(stillThere).toEqual([{ animal_id: favoriteAnimalId }]);
+  });
+
+  it("lets an adopter remove their own favorite even after the animal is unpublished", async () => {
+    const { error: unpublishError } = await staff.client
+      .from("animals")
+      .update({ publication_status: "draft" })
+      .eq("id", favoriteAnimalId);
+    const { data: deleted, error: deleteError } = await adopterA.client
+      .from("favorites")
+      .delete()
+      .eq("animal_id", favoriteAnimalId)
+      .select("animal_id");
+
+    expect(unpublishError).toBeNull();
+    expect(deleteError).toBeNull();
+    expect(deleted).toEqual([{ animal_id: favoriteAnimalId }]);
+  });
+});
