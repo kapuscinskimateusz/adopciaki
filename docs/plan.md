@@ -14,7 +14,7 @@ Stan na 29.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` jest skonf
 | 2. Auth      | Gotowy; implementacja i ręczne testy E2E przepływu e-mailowego potwierdzone przez użytkownika     |
 | 3. Panel     | Gotowy; zarządzanie zwierzętami i zdjęciami wdrożone do Supabase dev, ręczny test UI potwierdzony |
 | 4. Katalog   | Gotowy; dane z Supabase, filtry w URL, profil i galeria, ręczny test UI potwierdzony              |
-| 5. Ulubione  | Wdrożony (migracja i testy RLS zdane); czeka na ręczny test UI                                    |
+| 5. Ulubione  | Gotowy; migracja i testy RLS zdane, ręczny test UI potwierdzony                                   |
 | 5–9          | Nie rozpoczęte                                                                                    |
 
 ### Etap 0 — wykonane i zweryfikowane
@@ -77,7 +77,7 @@ Stan na 29.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` jest skonf
 - Nagłówek publiczny odczytuje sesję (`getCurrentViewer()`): zalogowany widzi „Moje konto” i „Wyloguj się”, staff także „Panel”; gość widzi „Zaloguj się” i „Załóż konto”. Błąd Supabase degraduje widok do gościa. To tylko UX, dostęp egzekwują strony i RLS.
 - Serduszka na kartach usunięto z prototypu; ulubione wrócą w etapie 5. Dane przykładowe zostają wyłącznie dla ilustracji w hero i sekcji dopasowania.
 
-### Etap 5 — ulubione (wdrożony, czeka na ręczny test UI)
+### Etap 5 — ulubione (zakończony)
 
 - Tabela `favorites` (`user_id`, `animal_id`, `created_at`, klucz główny `(user_id, animal_id)`) z RLS: użytkownik widzi, dodaje i usuwa wyłącznie własne wpisy; dodać można tylko zwierzę `published`; brak `update` i brak dostępu dla gościa. Wpis można usunąć także po cofnięciu publikacji zwierzęcia.
 - Serduszko (formularz z Server Action `toggleFavoriteAction`, walidacja Zod) na kartach i profilu; gość po kliknięciu trafia do logowania i wraca na tę samą stronę (ulubione nie jest dodawane automatycznie). Lista ulubionych (najnowsze pierwsze) jest w `/account`; niepublikowane zwierzęta znikają z niej dzięki RLS.
