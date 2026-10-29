@@ -50,6 +50,8 @@ export function CatalogFilters({ params }: { params: CatalogParams }) {
       </nav>
 
       <form
+        // Przemontowanie po zmianie URL resetuje niekontrolowane pola do aktualnych parametrów.
+        key={buildCatalogHref(params)}
         action="/animals"
         method="get"
         className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6"
