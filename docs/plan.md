@@ -30,7 +30,7 @@ Stan na 29.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` jest skonf
 - **Supabase Auth:** Site URL, dozwolone adresy przekierowań i wymagane potwierdzanie e-maila sprawdzono w Dashboardzie 27.10.2026. Użytkownik potwierdził 28.10.2026, że rejestracja, potwierdzenie e-maila, logowanie i reset hasła działają z domyślną wysyłką Supabase. Własny SMTP nie jest obecnie potrzebny. Callback aplikacji to `/auth/callback`; pełny adres musi odpowiadać `NEXT_PUBLIC_SITE_URL` (lokalnie port 3000 lub faktyczny port dev).
 - **GitHub Actions:** workflow jest przygotowany; jego wykonanie zdalne będzie można potwierdzić po wypchnięciu commita. Lokalna walidacja projektu jest wykonywana przed commitem.
 - **Husky i lint-staged pominięte** jako opcjonalne.
-- Zmienne środowiskowe w CI nie są ustawiane; build działa bez konfiguracji Supabase.
+- Zmienne środowiskowe w CI nie są ustawiane; build musi działać bez konfiguracji Supabase. Trasy zależne od sesji są dynamiczne, bo `createClient()` wywołuje `cookies()` przed odczytem konfiguracji (poprawka błędu prerenderu `/account` w CI).
 
 ### Odchylenia od pierwotnego planu etapu 0
 

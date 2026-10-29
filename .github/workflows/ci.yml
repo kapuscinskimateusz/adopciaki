@@ -21,5 +21,5 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
-      # Build działa bez Supabase: konfiguracja jest opcjonalna do etapu 1.
+      # Build działa bez zmiennych Supabase: trasy zależne od sesji są dynamiczne.
       - run: npm run build
