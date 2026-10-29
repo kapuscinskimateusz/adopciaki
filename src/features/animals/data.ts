@@ -7,6 +7,7 @@ import {
   animalSpecies,
 } from "@/features/admin/animals/schema";
 import { ANIMAL_PHOTO_BUCKET } from "@/features/admin/animals/photo-schema";
+import { getCurrentUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import {
   CATALOG_PAGE_SIZE,
@@ -166,4 +167,42 @@ export async function getAnimalBySlug(slug: string): Promise<PublicAnimal | null
 
   const [animal] = await parseAnimals([data]);
   return animal;
+}
+
+// Dla gościa zwraca pusty zbiór; RLS zawęża wynik do ulubionych zalogowanego.
+export async function getFavoriteIds(): Promise<Set<string>> {
+  if (!(await getCurrentUser())) return new Set();
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("favorites").select("animal_id");
+  if (error) {
+    throw new Error(`Nie udało się pobrać ulubionych: ${error.message}`);
+  }
+  return new Set((data ?? []).map((row) => row.animal_id as string));
+}
+
+// Zwierzęta, które przestały być opublikowane, znikają z listy dzięki RLS na animals.
+export async function getFavoriteAnimals(): Promise<PublicAnimal[]> {
+  const supabase = await createClient();
+  const { data: favorites, error } = await supabase
+    .from("favorites")
+    .select("animal_id")
+    .order("created_at", { ascending: false });
+  if (error) {
+    throw new Error(`Nie udało się pobrać ulubionych: ${error.message}`);
+  }
+
+  const ids = (favorites ?? []).map((row) => row.animal_id as string);
+  if (ids.length === 0) return [];
+
+  const { data, error: animalsError } = await supabase
+    .from("animals")
+    .select(ANIMAL_COLUMNS)
+    .eq("publication_status", "published")
+    .in("id", ids);
+  if (animalsError) {
+    throw new Error(`Nie udało się pobrać ulubionych zwierząt: ${animalsError.message}`);
+  }
+
+  const animals = await parseAnimals(data ?? []);
+  return animals.sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id));
 }

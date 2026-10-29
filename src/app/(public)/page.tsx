@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { AnimalCard } from "@/features/animals/animal-card";
-import { getFeaturedAnimals } from "@/features/animals/data";
+import { getFavoriteIds, getFeaturedAnimals } from "@/features/animals/data";
 import { Hero } from "@/features/landing/hero";
 import { HowItWorks } from "@/features/landing/how-it-works";
 import { MatchShowcase } from "@/features/landing/match-showcase";
 import { VisitSection } from "@/features/landing/visit-section";
 
 export default async function HomePage() {
-  const featured = await getFeaturedAnimals(4);
+  const [featured, favoriteIds] = await Promise.all([
+    getFeaturedAnimals(4),
+    getFavoriteIds(),
+  ]);
 
   return (
     <>
@@ -29,7 +32,11 @@ export default async function HomePage() {
           <ul className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {featured.map((animal) => (
               <li key={animal.id} className="flex flex-col [&>article]:flex-1">
-                <AnimalCard animal={animal} />
+                <AnimalCard
+                  animal={animal}
+                  isFavorite={favoriteIds.has(animal.id)}
+                  returnTo="/"
+                />
               </li>
             ))}
           </ul>

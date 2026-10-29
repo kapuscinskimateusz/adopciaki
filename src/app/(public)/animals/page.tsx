@@ -8,7 +8,7 @@ import {
   hasActiveFilters,
   parseCatalogParams,
 } from "@/features/animals/catalog-query";
-import { getCatalogPage } from "@/features/animals/data";
+import { getCatalogPage, getFavoriteIds } from "@/features/animals/data";
 
 export async function generateMetadata({
   searchParams,
@@ -28,7 +28,10 @@ export async function generateMetadata({
 
 export default async function AnimalsPage({ searchParams }: PageProps<"/animals">) {
   const params = parseCatalogParams(await searchParams);
-  const { animals, total, totalPages } = await getCatalogPage(params);
+  const [{ animals, total, totalPages }, favoriteIds] = await Promise.all([
+    getCatalogPage(params),
+    getFavoriteIds(),
+  ]);
 
   if (params.page > totalPages) {
     redirect(buildCatalogHref(params, { page: totalPages }));
@@ -68,7 +71,11 @@ export default async function AnimalsPage({ searchParams }: PageProps<"/animals"
         <ul className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {animals.map((animal) => (
             <li key={animal.id} className="flex flex-col [&>article]:flex-1">
-              <AnimalCard animal={animal} />
+              <AnimalCard
+                animal={animal}
+                isFavorite={favoriteIds.has(animal.id)}
+                returnTo={buildCatalogHref(params)}
+              />
             </li>
           ))}
         </ul>

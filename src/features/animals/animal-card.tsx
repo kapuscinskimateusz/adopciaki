@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnimalArt } from "./animal-art";
+import { FavoriteButton } from "@/features/favorites/favorite-button";
 import { formatAge } from "./catalog-query";
 import type { PublicAnimal } from "./data";
 import { ADOPTION_STATUS_LABEL, FALLBACK_ART, SIZE_LABEL, SPECIES_LABEL } from "./labels";
@@ -46,7 +47,15 @@ export function AnimalStatusBadge({
   );
 }
 
-export function AnimalCard({ animal }: { animal: PublicAnimal }) {
+export function AnimalCard({
+  animal,
+  isFavorite = false,
+  returnTo,
+}: {
+  animal: PublicAnimal;
+  isFavorite?: boolean;
+  returnTo: string;
+}) {
   const photo = animal.photos[0];
   const art = FALLBACK_ART[animal.species];
   const excerpt =
@@ -80,6 +89,13 @@ export function AnimalCard({ animal }: { animal: PublicAnimal }) {
         <span className="absolute top-3 left-3">
           <AnimalStatusBadge status={animal.adoption_status} />
         </span>
+        <FavoriteButton
+          animalId={animal.id}
+          animalName={animal.name}
+          isFavorite={isFavorite}
+          returnTo={returnTo}
+          className="absolute top-2 right-2 z-10"
+        />
       </div>
 
       <div className="flex flex-1 flex-col gap-3 p-5">

@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/layout/logo";
+import { AnimalCard } from "@/features/animals/animal-card";
+import { getFavoriteAnimals } from "@/features/animals/data";
 import { signOutAction } from "@/features/auth/actions";
 import { requireCurrentUser } from "@/lib/supabase/auth";
 
 export default async function AccountPage() {
   const user = await requireCurrentUser();
+  const favorites = await getFavoriteAnimals();
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 px-5 py-10 sm:py-16">
@@ -28,7 +31,7 @@ export default async function AccountPage() {
           Zalogowano jako <strong className="text-foreground">{user.email}</strong>.
         </p>
         <p className="text-muted-foreground mt-6 text-sm">
-          Funkcje profilu i ulubionych pojawią się w kolejnych etapach projektu.
+          Funkcje profilu pojawią się w kolejnych etapach projektu.
         </p>
         <Link
           href="/"
@@ -36,6 +39,32 @@ export default async function AccountPage() {
         >
           Wróć do katalogu zwierząt
         </Link>
+      </section>
+
+      <section className="mt-10" aria-labelledby="favorites-heading">
+        <h2 id="favorites-heading" className="font-heading text-2xl font-semibold">
+          Ulubione
+        </h2>
+        {favorites.length > 0 ? (
+          <ul className="mt-6 grid gap-6 sm:grid-cols-2">
+            {favorites.map((animal) => (
+              <li key={animal.id} className="flex flex-col [&>article]:flex-1">
+                <AnimalCard animal={animal} isFavorite returnTo="/account" />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-muted-foreground mt-3">
+            Nie masz jeszcze ulubionych zwierząt.{" "}
+            <Link
+              href="/animals"
+              className="text-primary underline-offset-4 hover:underline"
+            >
+              Przeglądaj katalog
+            </Link>
+            .
+          </p>
+        )}
       </section>
     </main>
   );

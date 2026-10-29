@@ -5,7 +5,8 @@ import { notFound } from "next/navigation";
 import { AnimalArt } from "@/features/animals/animal-art";
 import { AnimalStatusBadge, EnergyMeter } from "@/features/animals/animal-card";
 import { formatAge } from "@/features/animals/catalog-query";
-import { getAnimalBySlug } from "@/features/animals/data";
+import { getAnimalBySlug, getFavoriteIds } from "@/features/animals/data";
+import { FavoriteButton } from "@/features/favorites/favorite-button";
 import {
   FALLBACK_ART,
   SEX_LABEL,
@@ -45,6 +46,7 @@ export default async function AnimalProfilePage({
   const { slug } = await params;
   const animal = await getAnimalBySlug(slug);
   if (!animal) notFound();
+  const favoriteIds = await getFavoriteIds();
 
   const art = FALLBACK_ART[animal.species];
   const [mainPhoto, ...otherPhotos] = animal.photos;
@@ -113,9 +115,18 @@ export default async function AnimalProfilePage({
 
         <section>
           <AnimalStatusBadge status={animal.adoption_status} />
-          <h1 className="font-heading mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-            {animal.name}
-          </h1>
+          <div className="mt-4 flex items-start justify-between gap-4">
+            <h1 className="font-heading text-4xl font-semibold tracking-tight sm:text-5xl">
+              {animal.name}
+            </h1>
+            <FavoriteButton
+              animalId={animal.id}
+              animalName={animal.name}
+              isFavorite={favoriteIds.has(animal.id)}
+              returnTo={`/animals/${animal.slug}`}
+              className="shrink-0"
+            />
+          </div>
 
           <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4">
             {facts.map(([term, value]) => (
