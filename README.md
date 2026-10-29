@@ -4,7 +4,7 @@ Platforma adopcyjna dla jednego schroniska: katalog zwierząt, konta adoptujący
 
 **Stack:** Next.js (App Router) · TypeScript · Tailwind CSS · shadcn/ui · Supabase (Postgres, Auth, Storage, RLS). Plan i status etapów: [docs/plan.md](docs/plan.md). Decyzje: [docs/adr](docs/adr).
 
-**Status:** Etapy 1 (schemat i RLS), 2 (Auth) i 3 (panel staff — zwierzęta i zdjęcia) są zakończone. Użytkownik potwierdził ręczne testy przepływu e-mailowego oraz pełny test panelu i zarządzania zdjęciami 29.10.2026. Wszystkie 46 testów, w tym integracyjne testy RLS na Supabase dev, przeszły. Etap 4 (publiczny katalog z Supabase: filtry w URL, sortowanie, paginacja, profil i galeria) jest zaimplementowany i czeka na ręczny test UI.
+**Status:** Etapy 1 (schemat i RLS), 2 (Auth) i 3 (panel staff — zwierzęta i zdjęcia) są zakończone. Użytkownik potwierdził ręczne testy przepływu e-mailowego oraz pełny test panelu i zarządzania zdjęciami 29.10.2026. Wszystkie 46 testów, w tym integracyjne testy RLS na Supabase dev, przeszły. Etap 4 (publiczny katalog z Supabase: filtry w URL, sortowanie, paginacja, profil i galeria) jest zakończony.
 
 ## Uruchomienie
 

@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import { signOutAction } from "@/features/auth/actions";
+import type { Viewer } from "@/lib/supabase/auth";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { NAV_LINKS } from "./nav-links";
 
-export function MobileNav() {
+export function MobileNav({ viewer }: { viewer: Viewer }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -42,23 +44,63 @@ export function MobileNav() {
               </li>
             ))}
             <li className="mt-2 flex gap-2">
-              <Link
-                href="/login"
-                onClick={() => setOpen(false)}
-                className={cn(
-                  buttonVariants({ variant: "outline" }),
-                  "h-11 flex-1 rounded-full text-base",
-                )}
-              >
-                Zaloguj się
-              </Link>
-              <Link
-                href="/register"
-                onClick={() => setOpen(false)}
-                className={cn(buttonVariants(), "h-11 flex-1 rounded-full text-base")}
-              >
-                Załóż konto
-              </Link>
+              {viewer ? (
+                <>
+                  {viewer.isStaff && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setOpen(false)}
+                      className={cn(
+                        buttonVariants({ variant: "outline" }),
+                        "h-11 flex-1 rounded-full text-base",
+                      )}
+                    >
+                      Panel
+                    </Link>
+                  )}
+                  <Link
+                    href="/account"
+                    onClick={() => setOpen(false)}
+                    className={cn(
+                      buttonVariants({ variant: "outline" }),
+                      "h-11 flex-1 rounded-full text-base",
+                    )}
+                  >
+                    Moje konto
+                  </Link>
+                  <form action={signOutAction} className="flex flex-1">
+                    <button
+                      type="submit"
+                      className={cn(
+                        buttonVariants(),
+                        "h-11 flex-1 rounded-full text-base",
+                      )}
+                    >
+                      Wyloguj się
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    onClick={() => setOpen(false)}
+                    className={cn(
+                      buttonVariants({ variant: "outline" }),
+                      "h-11 flex-1 rounded-full text-base",
+                    )}
+                  >
+                    Zaloguj się
+                  </Link>
+                  <Link
+                    href="/register"
+                    onClick={() => setOpen(false)}
+                    className={cn(buttonVariants(), "h-11 flex-1 rounded-full text-base")}
+                  >
+                    Załóż konto
+                  </Link>
+                </>
+              )}
             </li>
           </ul>
         </nav>

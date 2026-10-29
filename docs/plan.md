@@ -13,7 +13,7 @@ Stan na 29.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` jest skonf
 | 1. Schemat   | Gotowy; profile, zwierzęta, zdjęcia i RLS wdrożone, testy integracyjne zdane                      |
 | 2. Auth      | Gotowy; implementacja i ręczne testy E2E przepływu e-mailowego potwierdzone przez użytkownika     |
 | 3. Panel     | Gotowy; zarządzanie zwierzętami i zdjęciami wdrożone do Supabase dev, ręczny test UI potwierdzony |
-| 4. Katalog   | Zaimplementowany (dane z Supabase, filtry w URL, profil, galeria); czeka na ręczny test UI        |
+| 4. Katalog   | Gotowy; dane z Supabase, filtry w URL, profil i galeria, ręczny test UI potwierdzony              |
 | 5–9          | Nie rozpoczęte                                                                                    |
 
 ### Etap 0 — wykonane i zweryfikowane
@@ -68,11 +68,12 @@ Stan na 29.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` jest skonf
 - Staff może dodawać zdjęcia z walidacją typu MIME, sygnatury pliku, rozmiaru i tekstu alternatywnego, ustawiać kolejność, edytować tekst alternatywny i usuwać plik wraz z metadanymi. Po utworzeniu zwierzęcia panel przechodzi do jego edycji. Pliki publicznego bucketu są dostępne po poznaniu URL także dla szkiców; dostęp do listowania i mutacji Storage pozostaje ograniczony RLS.
 - 29 testów, w tym integracyjne testy RLS Storage i metadanych na Supabase dev, przeszło 29.10.2026. Lint, typecheck, format check i build przechodzą.
 
-### Etap 4 — katalog publiczny (zaimplementowany, czeka na ręczny test UI)
+### Etap 4 — katalog publiczny (zakończony)
 
 - `/animals` (lista) i `/animals/[slug]` (profil z galerią) czytają dane z Supabase sesją użytkownika; gość widzi wyłącznie zwierzęta `published` (RLS plus jawny filtr). Domyślnie lista pomija zwierzęta adoptowane; profil adoptowanego zwierzęcia pozostaje dostępny pod bezpośrednim adresem.
 - Filtry (gatunek, rozmiar, płeć, status, szukanie po imieniu), sortowanie i paginacja (12 na stronę) żyją w URL; parametry waliduje Zod, nieprawidłowe wartości są ignorowane, a strona poza zakresem przekierowuje na ostatnią. Zapytania są dynamiczne, więc build nadal działa bez konfiguracji Supabase.
 - Strona główna pokazuje cztery najnowsze dostępne zwierzęta i link do katalogu. Zwierzęta bez zdjęć mają ilustrację zastępczą. Metadane SEO: tytuł, opis, canonical, Open Graph; strony z filtrami i dalsze strony mają `noindex`.
+- Nagłówek publiczny odczytuje sesję (`getCurrentViewer()`): zalogowany widzi „Moje konto” i „Wyloguj się”, staff także „Panel”; gość widzi „Zaloguj się” i „Załóż konto”. Błąd Supabase degraduje widok do gościa. To tylko UX, dostęp egzekwują strony i RLS.
 - Serduszka na kartach usunięto z prototypu; ulubione wrócą w etapie 5. Dane przykładowe zostają wyłącznie dla ilustracji w hero i sekcji dopasowania.
 
 ### Podjęte decyzje

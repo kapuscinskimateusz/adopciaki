@@ -1,11 +1,15 @@
 import { buttonVariants } from "@/components/ui/button";
+import { signOutAction } from "@/features/auth/actions";
+import { getCurrentViewer } from "@/lib/supabase/auth";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Logo } from "./logo";
 import { MobileNav } from "./mobile-nav";
 import { NAV_LINKS } from "./nav-links";
 
-export function SiteHeader() {
+export async function SiteHeader() {
+  const viewer = await getCurrentViewer();
+
   return (
     <header className="bg-background/85 border-border/60 sticky top-0 z-40 border-b backdrop-blur-md">
       <div className="relative mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
@@ -27,21 +31,59 @@ export function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
-          <Link
-            href="/login"
-            className={cn(buttonVariants({ variant: "ghost" }), "h-10 rounded-full px-4")}
-          >
-            Zaloguj się
-          </Link>
-          <Link
-            href="/register"
-            className={cn(buttonVariants(), "h-10 rounded-full px-5")}
-          >
-            Załóż konto
-          </Link>
+          {viewer ? (
+            <>
+              {viewer.isStaff && (
+                <Link
+                  href="/admin"
+                  className={cn(
+                    buttonVariants({ variant: "ghost" }),
+                    "h-10 rounded-full px-4",
+                  )}
+                >
+                  Panel
+                </Link>
+              )}
+              <Link
+                href="/account"
+                className={cn(
+                  buttonVariants({ variant: "ghost" }),
+                  "h-10 rounded-full px-4",
+                )}
+              >
+                Moje konto
+              </Link>
+              <form action={signOutAction}>
+                <button
+                  type="submit"
+                  className={cn(buttonVariants(), "h-10 rounded-full px-5")}
+                >
+                  Wyloguj się
+                </button>
+              </form>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className={cn(
+                  buttonVariants({ variant: "ghost" }),
+                  "h-10 rounded-full px-4",
+                )}
+              >
+                Zaloguj się
+              </Link>
+              <Link
+                href="/register"
+                className={cn(buttonVariants(), "h-10 rounded-full px-5")}
+              >
+                Załóż konto
+              </Link>
+            </>
+          )}
         </div>
 
-        <MobileNav />
+        <MobileNav viewer={viewer} />
       </div>
     </header>
   );
