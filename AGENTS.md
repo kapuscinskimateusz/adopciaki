@@ -17,3 +17,4 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Autoryzację na serwerze opieraj na `supabase.auth.getUser()`, nie `getSession()`.
 - Dane wejściowe waliduj Zod po stronie serwera. Zmiany schematu tylko przez migracje w `supabase/migrations/`.
 - Przed zakończeniem zadania uruchom: `npm run lint && npm run typecheck && npm test && npm run build`.
+- Commity: Conventional Commits po angielsku, tryb rozkazujący (`feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`), np. `feat: add public animal catalog`. Nie przepisuj wypchniętej historii.
