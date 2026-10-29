@@ -1,15 +1,11 @@
-"use client";
-
-import { ArrowRight, Heart } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnimalArt } from "./animal-art";
-import { SPECIES_LABEL, STATUS_LABEL, type SampleAnimal } from "./sample-animals";
-
-type Props = {
-  animal: SampleAnimal;
-  favorite: boolean;
-  onToggleFavorite: (id: string) => void;
-};
+import { formatAge } from "./catalog-query";
+import type { PublicAnimal } from "./data";
+import { ADOPTION_STATUS_LABEL, FALLBACK_ART, SIZE_LABEL, SPECIES_LABEL } from "./labels";
 
 export function EnergyMeter({ level }: { level: number }) {
   return (
@@ -31,51 +27,59 @@ export function EnergyMeter({ level }: { level: number }) {
   );
 }
 
-export function AnimalCard({ animal, favorite, onToggleFavorite }: Props) {
-  const meeting = animal.status === "meeting";
+export function AnimalStatusBadge({
+  status,
+}: {
+  status: PublicAnimal["adoption_status"];
+}) {
+  return (
+    <span
+      className={cn(
+        "rounded-full px-3 py-1 text-xs font-semibold",
+        status === "meeting"
+          ? "bg-forest text-forest-foreground"
+          : "bg-card text-foreground",
+      )}
+    >
+      {ADOPTION_STATUS_LABEL[status]}
+    </span>
+  );
+}
+
+export function AnimalCard({ animal }: { animal: PublicAnimal }) {
+  const photo = animal.photos[0];
+  const art = FALLBACK_ART[animal.species];
+  const excerpt =
+    animal.description.length > 140
+      ? `${animal.description.slice(0, 137).trimEnd()}…`
+      : animal.description;
 
   return (
     <article className="group bg-card border-border/70 relative flex flex-col overflow-hidden rounded-3xl border shadow-[0_1px_0_rgba(43,33,24,0.04)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_-18px_rgba(43,33,24,0.35)]">
       <div
         className="relative flex aspect-[5/4] items-end justify-center overflow-hidden"
-        style={{ backgroundColor: animal.tile }}
+        style={{ backgroundColor: art.tile }}
       >
-        <span
-          aria-hidden
-          className="absolute -top-10 -right-10 size-40 rounded-full bg-white/35"
-        />
-        <AnimalArt
-          species={animal.species}
-          palette={animal.palette}
-          label={`Ilustracja: ${SPECIES_LABEL[animal.species].toLowerCase()} ${animal.name}`}
-          className="relative h-[92%] w-auto transition duration-500 group-hover:scale-105"
-        />
-        <span
-          className={cn(
-            "absolute top-3 left-3 rounded-full px-3 py-1 text-xs font-semibold",
-            meeting ? "bg-forest text-forest-foreground" : "bg-card text-foreground",
-          )}
-        >
-          {STATUS_LABEL[animal.status]}
-        </span>
-        <button
-          type="button"
-          onClick={() => onToggleFavorite(animal.id)}
-          aria-pressed={favorite}
-          aria-label={
-            favorite
-              ? `Usuń ${animal.name} z obserwowanych`
-              : `Dodaj ${animal.name} do obserwowanych`
-          }
-          className="bg-card/95 text-foreground focus-visible:ring-ring absolute top-2 right-2 grid size-11 place-items-center rounded-full shadow-sm transition hover:scale-105 focus-visible:ring-2 focus-visible:outline-none active:scale-95"
-        >
-          <Heart
-            className={cn(
-              "size-5 transition",
-              favorite ? "fill-primary text-primary scale-110" : "text-foreground/70",
-            )}
+        {photo ? (
+          <Image
+            src={photo.url}
+            alt={photo.alt}
+            fill
+            unoptimized
+            sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
+            className="object-cover transition duration-500 group-hover:scale-105"
           />
-        </button>
+        ) : (
+          <AnimalArt
+            species={animal.species}
+            palette={art.palette}
+            label={`Ilustracja: ${SPECIES_LABEL[animal.species].toLowerCase()} ${animal.name}`}
+            className="relative h-[92%] w-auto transition duration-500 group-hover:scale-105"
+          />
+        )}
+        <span className="absolute top-3 left-3">
+          <AnimalStatusBadge status={animal.adoption_status} />
+        </span>
       </div>
 
       <div className="flex flex-1 flex-col gap-3 p-5">
@@ -89,33 +93,36 @@ export function AnimalCard({ animal, favorite, onToggleFavorite }: Props) {
             </span>
           </div>
           <p className="text-muted-foreground mt-0.5 text-sm">
-            {animal.breed} · {animal.age} · {animal.size}
+            {animal.breed} · {formatAge(animal.age_months)} ·{" "}
+            {SIZE_LABEL[animal.size].toLowerCase()}
           </p>
         </div>
 
-        <p className="text-foreground/80 text-sm leading-relaxed">{animal.blurb}</p>
+        <p className="text-foreground/80 text-sm leading-relaxed">{excerpt}</p>
 
-        <ul className="flex flex-wrap gap-1.5">
-          {animal.traits.map((t) => (
-            <li
-              key={t}
-              className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1 text-xs font-medium"
-            >
-              {t}
-            </li>
-          ))}
-        </ul>
+        {animal.traits.length > 0 && (
+          <ul className="flex flex-wrap gap-1.5">
+            {animal.traits.slice(0, 3).map((t) => (
+              <li
+                key={t}
+                className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1 text-xs font-medium"
+              >
+                {t}
+              </li>
+            ))}
+          </ul>
+        )}
 
         <div className="border-border/70 mt-auto flex items-center justify-between border-t pt-4">
-          <EnergyMeter level={animal.energy} />
-          <a
-            href="#zwierzaki"
-            className="text-primary focus-visible:ring-ring inline-flex items-center gap-1 rounded-md text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none"
+          <EnergyMeter level={animal.energy_level} />
+          <Link
+            href={`/animals/${animal.slug}`}
+            className="text-primary focus-visible:ring-ring inline-flex items-center gap-1 rounded-md text-sm font-semibold after:absolute after:inset-0 focus-visible:ring-2 focus-visible:outline-none"
           >
             Poznaj
             <span className="sr-only">: {animal.name}</span>
             <ArrowRight className="size-4 transition group-hover:translate-x-0.5" />
-          </a>
+          </Link>
         </div>
       </div>
     </article>

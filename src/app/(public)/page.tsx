@@ -1,10 +1,14 @@
-import { AnimalCatalog } from "@/features/animals/animal-catalog";
+import Link from "next/link";
+import { AnimalCard } from "@/features/animals/animal-card";
+import { getFeaturedAnimals } from "@/features/animals/data";
 import { Hero } from "@/features/landing/hero";
 import { HowItWorks } from "@/features/landing/how-it-works";
 import { MatchShowcase } from "@/features/landing/match-showcase";
 import { VisitSection } from "@/features/landing/visit-section";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const featured = await getFeaturedAnimals(4);
+
   return (
     <>
       <Hero />
@@ -18,13 +22,28 @@ export default function HomePage() {
             Poznaj nasze zwierzaki
           </h2>
           <p className="text-muted-foreground mt-3 text-lg">
-            Każde z nich ma swój charakter, historię i potrzeby. Kliknij serce, żeby
-            zapamiętać ulubieńców.
+            Każde z nich ma swój charakter, historię i potrzeby.
           </p>
         </div>
-        <div className="mt-10">
-          <AnimalCatalog />
-        </div>
+        {featured.length > 0 ? (
+          <ul className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {featured.map((animal) => (
+              <li key={animal.id} className="flex flex-col [&>article]:flex-1">
+                <AnimalCard animal={animal} />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-muted-foreground mt-10">
+            Obecnie nie mamy opublikowanych zwierząt. Zajrzyj do nas wkrótce.
+          </p>
+        )}
+        <Link
+          href="/animals"
+          className="bg-foreground text-background hover:bg-foreground/90 mt-10 inline-flex h-11 items-center rounded-full px-6 text-sm font-semibold"
+        >
+          Zobacz wszystkie zwierzęta
+        </Link>
       </section>
 
       <HowItWorks />

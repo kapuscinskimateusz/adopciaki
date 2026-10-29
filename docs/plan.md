@@ -13,7 +13,8 @@ Stan na 29.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` jest skonf
 | 1. Schemat   | Gotowy; profile, zwierzęta, zdjęcia i RLS wdrożone, testy integracyjne zdane                      |
 | 2. Auth      | Gotowy; implementacja i ręczne testy E2E przepływu e-mailowego potwierdzone przez użytkownika     |
 | 3. Panel     | Gotowy; zarządzanie zwierzętami i zdjęciami wdrożone do Supabase dev, ręczny test UI potwierdzony |
-| 4–9          | Nie rozpoczęte                                                                                    |
+| 4. Katalog   | Zaimplementowany (dane z Supabase, filtry w URL, profil, galeria); czeka na ręczny test UI        |
+| 5–9          | Nie rozpoczęte                                                                                    |
 
 ### Etap 0 — wykonane i zweryfikowane
 
@@ -67,6 +68,13 @@ Stan na 29.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` jest skonf
 - Staff może dodawać zdjęcia z walidacją typu MIME, sygnatury pliku, rozmiaru i tekstu alternatywnego, ustawiać kolejność, edytować tekst alternatywny i usuwać plik wraz z metadanymi. Po utworzeniu zwierzęcia panel przechodzi do jego edycji. Pliki publicznego bucketu są dostępne po poznaniu URL także dla szkiców; dostęp do listowania i mutacji Storage pozostaje ograniczony RLS.
 - 29 testów, w tym integracyjne testy RLS Storage i metadanych na Supabase dev, przeszło 29.10.2026. Lint, typecheck, format check i build przechodzą.
 
+### Etap 4 — katalog publiczny (zaimplementowany, czeka na ręczny test UI)
+
+- `/animals` (lista) i `/animals/[slug]` (profil z galerią) czytają dane z Supabase sesją użytkownika; gość widzi wyłącznie zwierzęta `published` (RLS plus jawny filtr). Domyślnie lista pomija zwierzęta adoptowane; profil adoptowanego zwierzęcia pozostaje dostępny pod bezpośrednim adresem.
+- Filtry (gatunek, rozmiar, płeć, status, szukanie po imieniu), sortowanie i paginacja (12 na stronę) żyją w URL; parametry waliduje Zod, nieprawidłowe wartości są ignorowane, a strona poza zakresem przekierowuje na ostatnią. Zapytania są dynamiczne, więc build nadal działa bez konfiguracji Supabase.
+- Strona główna pokazuje cztery najnowsze dostępne zwierzęta i link do katalogu. Zwierzęta bez zdjęć mają ilustrację zastępczą. Metadane SEO: tytuł, opis, canonical, Open Graph; strony z filtrami i dalsze strony mają `noindex`.
+- Serduszka na kartach usunięto z prototypu; ulubione wrócą w etapie 5. Dane przykładowe zostają wyłącznie dla ilustracji w hero i sekcji dopasowania.
+
 ### Podjęte decyzje
 
 - Supabase Cloud (bez lokalnego Supabase i Dockera).
@@ -89,7 +97,7 @@ Platforma jednego schroniska, która prowadzi od poznania zwierzęcia do odpowie
 
 ### Mapa produktu i główne ścieżki
 
-- **Publicznie:** strona główna i katalog → profil zwierzęcia → rejestracja/logowanie, ulubione lub zgłoszenie adopcyjne. Katalog nadal korzysta z danych przykładowych; podłączenie go do bazy jest osobnym etapem.
+- **Publicznie:** strona główna i katalog (`/animals`) → profil zwierzęcia (`/animals/[slug]`) → rejestracja/logowanie, ulubione lub zgłoszenie adopcyjne. Katalog czyta dane z Supabase.
 - **Adopter:** `/account` jest przestrzenią konta; profil, ulubione, preferencje i zgłoszenia są dodawane przyrostowo.
 - **Staff:** ten sam system logowania, ale domyślne wejście do wspólnego `/admin`. Panel ma nawigację modułową; początkowo dostępna jest sekcja „Zwierzęta”, później dojdą „Zgłoszenia”. `/admin` kieruje do pierwszej dostępnej sekcji, a strona publiczna pozostaje dostępna przez link z panelu.
 - **Zasada bezpieczeństwa:** menu i przekierowanie po zalogowaniu są UX-em, nie kontrolą dostępu. Każda chroniona strona i Server Action sprawdza rolę po stronie serwera, a uprawnienia do danych egzekwuje RLS. Staff nie uzyskuje roli przez rejestrację ani user metadata.
