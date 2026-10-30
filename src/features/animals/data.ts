@@ -233,3 +233,27 @@ export async function getRecommendableAnimals(): Promise<PublicAnimal[]> {
   }
   return parseAnimals(data ?? []);
 }
+
+export type CatalogStats = { waiting: number; adopted: number };
+
+// Statystyki na stronę główną. Awaria lub brak konfiguracji Supabase ukrywa je
+// zamiast psuć stronę (docs/product.md: liczby muszą być prawdziwe).
+export async function getCatalogStats(): Promise<CatalogStats | null> {
+  try {
+    const supabase = await createClient();
+    const countPublished = () =>
+      supabase
+        .from("animals")
+        .select("id", { count: "exact", head: true })
+        .eq("publication_status", "published");
+
+    const [waiting, adopted] = await Promise.all([
+      countPublished().neq("adoption_status", "adopted"),
+      countPublished().eq("adoption_status", "adopted"),
+    ]);
+    if (waiting.error || adopted.error) return null;
+    return { waiting: waiting.count ?? 0, adopted: adopted.count ?? 0 };
+  } catch {
+    return null;
+  }
+}

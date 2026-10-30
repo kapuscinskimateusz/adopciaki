@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, ClipboardList, Heart } from "lucide-react";
 import { getFavoriteIds } from "@/features/animals/data";
 import { getOwnPreferences } from "@/features/preferences/data";
+import { polishPlural } from "@/lib/plural";
 import { requireAdopter } from "@/lib/supabase/auth";
 
 export const metadata: Metadata = {
@@ -11,13 +12,10 @@ export const metadata: Metadata = {
 };
 
 function favoritesSummary(count: number) {
-  if (count === 0)
+  if (count === 0) {
     return "Nie masz jeszcze ulubionych. Kliknij serduszko przy zwierzaku.";
-  if (count === 1) return "Masz 1 ulubionego zwierzaka.";
-  const lastDigit = count % 10;
-  const lastTwo = count % 100;
-  const few = lastDigit >= 2 && lastDigit <= 4 && (lastTwo < 12 || lastTwo > 14);
-  return `Masz ${count} ${few ? "ulubione zwierzaki" : "ulubionych zwierzaków"}.`;
+  }
+  return `Masz ${count} ${polishPlural(count, "ulubionego zwierzaka", "ulubione zwierzaki", "ulubionych zwierzaków")}.`;
 }
 
 export default async function AccountPage() {

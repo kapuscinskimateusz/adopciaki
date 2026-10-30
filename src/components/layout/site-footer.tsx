@@ -8,8 +8,8 @@ export function SiteFooter() {
         <div className="max-w-sm">
           <Logo inverted />
           <p className="text-forest-foreground/75 mt-4 text-sm leading-relaxed">
-            Platforma adopcyjna schroniska dla zwierząt. Pomagamy znaleźć dom i
-            porządkujemy cały proces — od pierwszego spojrzenia po spotkanie.
+            Platforma adopcyjna schroniska dla zwierząt. Pomagamy znaleźć zwierzakowi dom,
+            a Tobie — domownika, który do Ciebie pasuje.
           </p>
         </div>
 
@@ -42,8 +42,7 @@ export function SiteFooter() {
 
       <div className="border-forest-foreground/15 border-t">
         <p className="text-forest-foreground/60 mx-auto max-w-6xl px-5 py-5 text-xs">
-          Prototyp wizualny — wszystkie zwierzęta, liczby i dane kontaktowe są
-          przykładowe. Ilustracje wygenerowane w kodzie.
+          Projekt portfolio. Adres i dane kontaktowe schroniska są przykładowe.
         </p>
       </div>
     </footer>

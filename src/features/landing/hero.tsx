@@ -1,18 +1,42 @@
+import Link from "next/link";
 import { ArrowRight, Heart } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { AnimalArt } from "@/features/animals/animal-art";
+import type { CatalogStats } from "@/features/animals/data";
 import { sampleAnimals } from "@/features/animals/sample-animals";
+import { polishPlural } from "@/lib/plural";
+import { EXAMPLE_MATCH } from "./match-example";
 import { cn } from "@/lib/utils";
 
 const byId = (id: string) => sampleAnimals.find((a) => a.id === id)!;
 
-const STATS = [
-  { value: "126", label: "zwierząt szuka domu" },
-  { value: "48", label: "adopcji w tym roku" },
-  { value: "4", label: "kroki do zgłoszenia" },
-];
+// Tylko prawdziwe liczby z bazy; zera i brak danych ukrywają pozycję.
+function heroStats(stats: CatalogStats | null) {
+  if (!stats) return [];
+  return [
+    {
+      value: stats.waiting,
+      label: polishPlural(
+        stats.waiting,
+        "zwierzak czeka na dom",
+        "zwierzaki czekają na dom",
+        "zwierzaków czeka na dom",
+      ),
+    },
+    {
+      value: stats.adopted,
+      label: polishPlural(
+        stats.adopted,
+        "zwierzak znalazł już dom",
+        "zwierzaki znalazły już dom",
+        "zwierzaków znalazło już dom",
+      ),
+    },
+  ].filter((stat) => stat.value > 0);
+}
 
-export function Hero() {
+export function Hero({ stats }: { stats: CatalogStats | null }) {
+  const items = heroStats(stats);
   const dog = byId("fasola");
   const cat = byId("pepe");
   const rabbit = byId("klara");
@@ -53,13 +77,13 @@ export function Hero() {
           </h1>
 
           <p className="text-muted-foreground mt-6 max-w-xl text-lg leading-relaxed text-pretty">
-            Poznaj zwierzaki z naszego schroniska, sprawdź, kto pasuje do Twojego życia, i
-            zgłoś się po adopcję — bez telefonów i papierowych kolejek.
+            Przejrzyj zwierzaki ze schroniska, sprawdź, które pasują do Twojego stylu
+            życia, i zapisz ulubione na swoim koncie.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <a
-              href="#zwierzaki"
+            <Link
+              href="/animals"
               className={cn(
                 buttonVariants({ size: "lg" }),
                 "h-12 rounded-full px-7 text-base shadow-[0_10px_24px_-10px_rgba(194,62,34,0.7)]",
@@ -67,7 +91,7 @@ export function Hero() {
             >
               Zobacz zwierzaki
               <ArrowRight className="size-4" />
-            </a>
+            </Link>
             <a
               href="#dopasowanie"
               className={cn(
@@ -75,25 +99,27 @@ export function Hero() {
                 "h-12 rounded-full px-7 text-base",
               )}
             >
-              Sprawdź dopasowanie
+              Pomóż mi wybrać
             </a>
           </div>
 
-          <dl className="border-border mt-10 grid max-w-lg grid-cols-3 gap-4 border-t pt-6">
-            {STATS.map((s) => (
-              <div key={s.label}>
-                <dt className="sr-only">{s.label}</dt>
-                <dd>
-                  <span className="font-heading block text-3xl font-semibold sm:text-4xl">
-                    {s.value}
-                  </span>
-                  <span className="text-muted-foreground text-sm leading-snug">
-                    {s.label}
-                  </span>
-                </dd>
-              </div>
-            ))}
-          </dl>
+          {items.length > 0 && (
+            <dl className="border-border mt-10 grid max-w-md grid-cols-2 gap-4 border-t pt-6">
+              {items.map((s) => (
+                <div key={s.label}>
+                  <dt className="sr-only">{s.label}</dt>
+                  <dd>
+                    <span className="font-heading block text-3xl font-semibold sm:text-4xl">
+                      {s.value}
+                    </span>
+                    <span className="text-muted-foreground text-sm leading-snug">
+                      {s.label}
+                    </span>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          )}
         </div>
 
         <div className="relative mx-auto aspect-square w-full max-w-[520px]">
@@ -133,8 +159,10 @@ export function Hero() {
               <Heart className="size-5 fill-current" aria-hidden />
             </span>
             <span className="text-sm leading-tight">
-              <strong className="font-heading block text-lg">92% zgodności</strong>
-              <span className="text-muted-foreground">Fasola i Twój styl życia</span>
+              <strong className="font-heading block text-lg">
+                {EXAMPLE_MATCH.score}% dopasowania
+              </strong>
+              <span className="text-muted-foreground">Przykład: Fasola i Twój dom</span>
             </span>
           </div>
         </div>

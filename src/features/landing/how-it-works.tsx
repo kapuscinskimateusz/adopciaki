@@ -1,25 +1,27 @@
-import { CalendarHeart, ClipboardList, PawPrint, Search } from "lucide-react";
+import { ClipboardList, Heart, PawPrint, Search } from "lucide-react";
 
+// Kroki opisują tylko działające funkcje (docs/product.md). Zgłoszenie adopcyjne
+// zastąpi krok „Zapisz ulubione” w etapie 7.
 const STEPS = [
   {
     icon: Search,
-    title: "Poznaj",
-    text: "Przeglądaj zwierzaki i filtruj według wielkości, energii i charakteru.",
+    title: "Poznaj zwierzaki",
+    text: "Przeglądaj zwierzaki ze schroniska i filtruj je według gatunku, wielkości i płci.",
   },
   {
     icon: ClipboardList,
-    title: "Opowiedz o sobie",
-    text: "Krótka ankieta: mieszkanie, doświadczenie i ile masz czasu na spacery.",
+    title: "Wypełnij ankietę",
+    text: "Kilka pytań o Twój dom, rytm dnia i doświadczenie. Pokażemy, kto pasuje najlepiej.",
   },
   {
-    icon: CalendarHeart,
-    title: "Złóż zgłoszenie",
-    text: "Wybierz ulubieńca, zaproponuj termin i śledź status w swoim koncie.",
+    icon: Heart,
+    title: "Zapisz ulubione",
+    text: "Kliknij serduszko przy zwierzaku, a znajdziesz go później na swoim koncie.",
   },
   {
     icon: PawPrint,
-    title: "Spotkajcie się",
-    text: "Pracownik schroniska kontaktuje się z Tobą, a Ty poznajesz zwierzaka na żywo.",
+    title: "Poznajcie się",
+    text: "Skontaktuj się ze schroniskiem i umów wizytę, żeby poznać zwierzaka na żywo.",
   },
 ];
 
@@ -29,10 +31,10 @@ export function HowItWorks() {
       <div className="mx-auto max-w-6xl px-5 py-20">
         <div className="max-w-2xl">
           <p className="text-primary text-sm font-semibold tracking-widest uppercase">
-            Jak to działa
+            Jak adoptować
           </p>
           <h2 className="font-heading mt-3 text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
-            Od „cześć” do „witaj w domu” w czterech krokach
+            Cztery kroki do spotkania ze zwierzakiem
           </h2>
         </div>
 

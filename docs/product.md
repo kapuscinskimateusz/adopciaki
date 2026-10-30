@@ -39,6 +39,23 @@
 
 **Auth:** `/login`, `/register`, `/forgot-password`, `/update-password` (także „Zmień hasło” z konta), `/auth/callback`.
 
+## Strona główna
+
+| Sekcja         | Treść i zachowanie                                                                                                                                  |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hero           | „Zobacz zwierzaki” (`/animals`), „Pomóż mi wybrać” (`#dopasowanie`); statystyki z bazy (czekają na dom, znalazły dom), zero lub błąd ukrywa pozycję |
+| Czekają na dom | cztery najnowsze dostępne zwierzęta i link do katalogu                                                                                              |
+| Jak adoptować  | Poznaj zwierzaki → Wypełnij ankietę → Zapisz ulubione → Poznajcie się                                                                               |
+| Dopasowanie    | przykład liczony silnikiem; przycisk: „Wypełnij ankietę” (gość, brak ankiety), „Zobacz swoje dopasowania” (jest ankieta), brak przycisku dla staff  |
+| Odwiedź nas    | dane wizyt; karta konta: gość „Załóż konto” / „Mam już konto”, adoptujący „Przejdź do konta”, staff „Przejdź do panelu”                             |
+
+**Do zmiany razem z etapem 7 (zgłoszenia):**
+
+- zakładka „Zgłoszenia” w koncie i menu „Moje konto”;
+- krok 3 „Zapisz ulubione” → „Wyślij zgłoszenie”;
+- opis w hero i w karcie konta: dopisać zgłaszanie chęci adopcji i śledzenie statusu;
+- przycisk zgłoszenia na profilu zwierzęcia.
+
 ## Słownik
 
 Używamy tych nazw konsekwentnie w menu, nagłówkach i przyciskach:

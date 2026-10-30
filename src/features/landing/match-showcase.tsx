@@ -3,27 +3,20 @@ import { ArrowRight, Check, ShieldCheck } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { AnimalArt } from "@/features/animals/animal-art";
 import { sampleAnimals } from "@/features/animals/sample-animals";
-import type { MatchReason } from "@/features/matching/engine";
+import { matchLevelLabel } from "@/features/matching/engine";
 import { MatchReasons, MatchScore } from "@/features/matching/match-summary";
 import { cn } from "@/lib/utils";
+import { EXAMPLE_MATCH } from "./match-example";
 
 const PRINCIPLES = [
-  "Jasne powody: widzisz, dlaczego dane zwierzę do Ciebie pasuje.",
-  "Odpowiedzi z ankiety widzisz tylko Ty i pracownicy schroniska.",
-  "Wynik to podpowiedź. Decyzję zawsze podejmuje człowiek.",
+  "Przy każdym zwierzaku widzisz, co pasuje, a co warto omówić.",
+  "Odpowiedzi widzisz tylko Ty i pracownicy schroniska.",
+  "To podpowiedź — o adopcji decydujecie razem ze schroniskiem.",
 ];
 
-const REASONS: MatchReason[] = [
-  { kind: "match", text: "Masz doświadczenie z aktywnymi psami" },
-  { kind: "match", text: "Deklarujesz ponad 2 godziny spacerów dziennie" },
-  { kind: "match", text: "Mieszkasz w domu z ogrodem" },
-  {
-    kind: "warning",
-    text: "Fasola nie lubi zostawać sama — warto omówić Twój plan dnia",
-  },
-];
+export type ShowcaseCta = { href: string; label: string } | null;
 
-export function MatchShowcase() {
+export function MatchShowcase({ cta }: { cta: ShowcaseCta }) {
   const dog = sampleAnimals.find((a) => a.id === "fasola")!;
 
   return (
@@ -39,11 +32,11 @@ export function MatchShowcase() {
             Dopasowanie
           </p>
           <h2 className="font-heading mt-3 text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
-            Nie czarna skrzynka. Reguły, które się tłumaczą.
+            Nie wiesz, od kogo zacząć? Pomożemy wybrać.
           </h2>
           <p className="text-forest-foreground/80 mt-5 max-w-lg text-lg leading-relaxed">
-            Odpowiedz na kilka pytań o swoje życie, a pokażemy zwierzaki, które mogą do
-            Ciebie pasować — razem z uzasadnieniem.
+            Odpowiedz na kilka pytań o swój dom i rytm dnia. Pokażemy zwierzaki, które
+            pasują najlepiej, i napiszemy dlaczego.
           </p>
 
           <ul className="mt-8 space-y-4">
@@ -57,16 +50,18 @@ export function MatchShowcase() {
             ))}
           </ul>
 
-          <Link
-            href="/account/matches/survey"
-            className={cn(
-              buttonVariants({ size: "lg" }),
-              "bg-sun text-forest hover:bg-sun/90 mt-9 h-12 rounded-full px-7 text-base",
-            )}
-          >
-            Wypełnij ankietę
-            <ArrowRight className="size-4" />
-          </Link>
+          {cta && (
+            <Link
+              href={cta.href}
+              className={cn(
+                buttonVariants({ size: "lg" }),
+                "bg-sun text-forest hover:bg-sun/90 mt-9 h-12 rounded-full px-7 text-base",
+              )}
+            >
+              {cta.label}
+              <ArrowRight className="size-4" />
+            </Link>
+          )}
         </div>
 
         <div className="relative min-w-0 lg:rotate-[1.5deg]">
@@ -85,18 +80,18 @@ export function MatchShowcase() {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
-                  Twoje dopasowanie
+                  Przykład dopasowania
                 </p>
                 <p className="font-heading text-2xl font-semibold">Fasola</p>
               </div>
-              <MatchScore score={92} />
+              <MatchScore score={EXAMPLE_MATCH.score} />
             </div>
 
             <p className="bg-sage/60 mt-5 rounded-xl px-4 py-2.5 text-sm font-semibold">
-              Dopasowanie wysokie, ponieważ…
+              Dopasowanie {matchLevelLabel(EXAMPLE_MATCH.score)}, ponieważ…
             </p>
 
-            <MatchReasons reasons={REASONS} className="mt-4" />
+            <MatchReasons reasons={EXAMPLE_MATCH.reasons} className="mt-4" />
 
             <p className="text-muted-foreground border-border mt-6 flex items-center gap-2 border-t pt-4 text-xs">
               <ShieldCheck className="size-4 shrink-0" aria-hidden />

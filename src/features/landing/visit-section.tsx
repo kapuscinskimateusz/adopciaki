@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ArrowRight, Clock, MapPin, Phone } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -8,7 +9,32 @@ const INFO = [
   { icon: Phone, title: "Kontakt", text: "+48 123 456 789" },
 ];
 
-export function VisitSection() {
+// Zalogowanym nie pokazujemy zachęt dla gościa (docs/product.md, zasada 6).
+const ACCOUNT_CARD = {
+  guest: {
+    title: "Załóż konto",
+    text: "Na koncie zapiszesz ulubione zwierzaki i zobaczysz, które pasują do Ciebie najlepiej.",
+    primary: { href: "/register", label: "Załóż konto" },
+    secondary: { href: "/login", label: "Mam już konto" },
+  },
+  adopter: {
+    title: "Twoje konto",
+    text: "Ulubione zwierzaki i Twoje dopasowania czekają na koncie.",
+    primary: { href: "/account", label: "Przejdź do konta" },
+    secondary: null,
+  },
+  staff: {
+    title: "Panel pracownika",
+    text: "Dodawaj zwierzaki, aktualizuj ich opisy i zdjęcia.",
+    primary: { href: "/admin", label: "Przejdź do panelu" },
+    secondary: null,
+  },
+} as const;
+
+export type VisitAudience = keyof typeof ACCOUNT_CARD;
+
+export function VisitSection({ audience }: { audience: VisitAudience }) {
+  const card = ACCOUNT_CARD[audience];
   return (
     <section id="wizyta" className="mx-auto max-w-6xl px-5 pb-24">
       <div className="grid gap-6 lg:grid-cols-2">
@@ -40,43 +66,41 @@ export function VisitSection() {
           </ul>
         </div>
 
-        <div
-          id="konto"
-          className="bg-primary text-primary-foreground relative flex flex-col justify-between gap-8 overflow-hidden rounded-[2rem] p-8 sm:p-10"
-        >
+        <div className="bg-primary text-primary-foreground relative flex flex-col justify-between gap-8 overflow-hidden rounded-[2rem] p-8 sm:p-10">
           <span
             aria-hidden
             className="bg-sun/25 absolute -right-16 -bottom-16 size-64 rounded-full"
           />
           <div className="relative">
             <h2 className="font-heading text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-              Załóż konto i zapisz swoich ulubieńców
+              {card.title}
             </h2>
             <p className="text-primary-foreground/85 mt-3 max-w-md leading-relaxed">
-              Obserwuj zwierzaki, wypełnij ankietę raz i śledź status każdego zgłoszenia w
-              jednym miejscu.
+              {card.text}
             </p>
           </div>
           <div className="relative flex flex-col gap-3 sm:flex-row">
-            <a
-              href="#konto"
+            <Link
+              href={card.primary.href}
               className={cn(
                 buttonVariants({ size: "lg" }),
                 "bg-card text-foreground hover:bg-card/90 h-12 rounded-full px-7 text-base",
               )}
             >
-              Załóż konto
+              {card.primary.label}
               <ArrowRight className="size-4" />
-            </a>
-            <a
-              href="#konto"
-              className={cn(
-                buttonVariants({ variant: "ghost", size: "lg" }),
-                "text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground h-12 rounded-full px-7 text-base",
-              )}
-            >
-              Mam już konto
-            </a>
+            </Link>
+            {card.secondary && (
+              <Link
+                href={card.secondary.href}
+                className={cn(
+                  buttonVariants({ variant: "ghost", size: "lg" }),
+                  "text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground h-12 rounded-full px-7 text-base",
+                )}
+              >
+                {card.secondary.label}
+              </Link>
+            )}
           </div>
         </div>
       </div>

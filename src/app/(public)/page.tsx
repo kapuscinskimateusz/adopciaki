@@ -1,20 +1,36 @@
 import Link from "next/link";
 import { AnimalCard } from "@/features/animals/animal-card";
-import { getFavoriteIds, getFeaturedAnimals } from "@/features/animals/data";
+import {
+  getCatalogStats,
+  getFavoriteIds,
+  getFeaturedAnimals,
+} from "@/features/animals/data";
 import { Hero } from "@/features/landing/hero";
 import { HowItWorks } from "@/features/landing/how-it-works";
-import { MatchShowcase } from "@/features/landing/match-showcase";
+import { MatchShowcase, type ShowcaseCta } from "@/features/landing/match-showcase";
 import { VisitSection } from "@/features/landing/visit-section";
+import { getOwnPreferences } from "@/features/preferences/data";
+import { getCurrentViewer } from "@/lib/supabase/auth";
 
 export default async function HomePage() {
-  const [featured, favoriteIds] = await Promise.all([
+  const [featured, favoriteIds, stats, viewer] = await Promise.all([
     getFeaturedAnimals(4),
     getFavoriteIds(),
+    getCatalogStats(),
+    getCurrentViewer(),
   ]);
+  const hasSurvey =
+    viewer && !viewer.isStaff ? Boolean(await getOwnPreferences()) : false;
+  // Staff nie wypełnia ankiety, więc nie widzi zachęty.
+  const showcaseCta: ShowcaseCta = viewer?.isStaff
+    ? null
+    : hasSurvey
+      ? { href: "/account/matches", label: "Zobacz swoje dopasowania" }
+      : { href: "/account/matches/survey", label: "Wypełnij ankietę" };
 
   return (
     <>
-      <Hero />
+      <Hero stats={stats} />
 
       <section id="zwierzaki" className="mx-auto max-w-6xl px-5 pb-20">
         <div className="max-w-2xl">
@@ -50,8 +66,10 @@ export default async function HomePage() {
       </section>
 
       <HowItWorks />
-      <MatchShowcase />
-      <VisitSection />
+      <MatchShowcase cta={showcaseCta} />
+      <VisitSection
+        audience={viewer ? (viewer.isStaff ? "staff" : "adopter") : "guest"}
+      />
     </>
   );
 }
