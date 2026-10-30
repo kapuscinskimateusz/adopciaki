@@ -16,7 +16,7 @@ Stan na 30.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` jest skonf
 | 4. Katalog      | Gotowy; dane z Supabase, filtry w URL, profil i galeria, ręczny test UI potwierdzony              |
 | 5. Ulubione     | Gotowy; migracja i testy RLS zdane, ręczny test UI potwierdzony                                   |
 | 6. Dopasowanie  | Gotowy; migracje wdrożone, testy RLS i reguł zdane, ręczny test UI potwierdzony                   |
-| 6a. Porządki UX | Gotowy; nawigacja per rola, konto w szablonie strony, nowe treści, czeka na ręczny test UI        |
+| 6a. Porządki UX | Gotowy; nawigacja per rola, konto w szablonie strony, nowe treści, ręczny test UI potwierdzony    |
 | 7–9             | Nie rozpoczęte                                                                                    |
 
 ### Etap 0 — wykonane i zweryfikowane
@@ -94,13 +94,13 @@ Stan na 30.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` jest skonf
 - 80 testów (w tym nowe testy RLS preferencji i pól zgodności oraz testy reguł) przeszło 30.10.2026. Lint, typecheck, format check i build przechodzą.
 - Użytkownik potwierdził ręczny test UI 30.10.2026: staff ustawia pola zgodności, adopter wypełnia ankietę i widzi ranking z uzasadnieniem.
 
-### Etap 6a — porządki UX (zaimplementowany, czeka na ręczny test UI)
+### Etap 6a — porządki UX (zakończony)
 
 - Koncepcja ról, tras, nawigacji i zasad treści spisana w [product.md](./product.md) (30.10.2026), z odnośnikiem w AGENTS.md.
 - Konto adoptującego działa w szablonie strony publicznej i ma zakładki Przegląd, Dopasowania (ankieta jako krok w zakładce, pusty stan zamiast przekierowania) i Ulubione. Trasy: `/account`, `/account/matches`, `/account/matches/survey`, `/account/favorites`.
 - Nagłówek: adoptujący ma jedno menu „Moje konto” (zakładki, „Zmień hasło”, „Wyloguj się”), staff ma „Panel pracownika”. Staff korzysta tylko z panelu: `requireAdopter()` przekierowuje go z konta do `/admin`, serduszka są ukryte, a akcja ulubionych odrzuca staff. W panelu link do strony i wylogowanie są w menu użytkownika.
 - Strona główna ma nowe, proste treści. Statystyki w hero pochodzą z bazy, przykład dopasowania liczy silnik reguł, a CTA zależą od roli. Martwe kotwice `#konto` i nieaktualna notka „Prototyp wizualny” zostały usunięte.
-- 92 testy przeszły 30.10.2026; lint, typecheck, format check i build przechodzą. Smoke test na `next start` z sesjami kont testowych potwierdził przekierowania i widoki per rola.
+- 92 testy przeszły 30.10.2026; lint, typecheck, format check i build przechodzą. Smoke test na `next start` z sesjami kont testowych potwierdził przekierowania i widoki per rola. Użytkownik potwierdził ręczny test UI 30.10.2026.
 
 ### Podjęte decyzje
 
