@@ -49,11 +49,12 @@ export function AnimalStatusBadge({
 
 export function AnimalCard({
   animal,
-  isFavorite = false,
+  favoriteIds,
   returnTo,
 }: {
   animal: PublicAnimal;
-  isFavorite?: boolean;
+  // Wynik getFavoriteIds(); null ukrywa serduszko (staff).
+  favoriteIds: ReadonlySet<string> | null;
   returnTo: string;
 }) {
   const photo = animal.photos[0];
@@ -89,13 +90,15 @@ export function AnimalCard({
         <span className="absolute top-3 left-3">
           <AnimalStatusBadge status={animal.adoption_status} />
         </span>
-        <FavoriteButton
-          animalId={animal.id}
-          animalName={animal.name}
-          isFavorite={isFavorite}
-          returnTo={returnTo}
-          className="absolute top-2 right-2 z-10"
-        />
+        {favoriteIds && (
+          <FavoriteButton
+            animalId={animal.id}
+            animalName={animal.name}
+            isFavorite={favoriteIds.has(animal.id)}
+            returnTo={returnTo}
+            className="absolute top-2 right-2 z-10"
+          />
+        )}
       </div>
 
       <div className="flex flex-1 flex-col gap-3 p-5">

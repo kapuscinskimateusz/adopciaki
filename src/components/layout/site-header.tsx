@@ -1,11 +1,12 @@
 import { buttonVariants } from "@/components/ui/button";
-import { signOutAction } from "@/features/auth/actions";
+import { ACCOUNT_LINKS } from "@/features/account/account-links";
 import { getCurrentViewer } from "@/lib/supabase/auth";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { AccountMenu } from "./account-menu";
 import { Logo } from "./logo";
 import { MobileNav } from "./mobile-nav";
-import { NAV_LINKS } from "./nav-links";
+import { ACCOUNT_MENU_EXTRA_LINKS, NAV_LINKS } from "./nav-links";
 
 export async function SiteHeader() {
   const viewer = await getCurrentViewer();
@@ -31,37 +32,19 @@ export async function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
-          {viewer ? (
-            <>
-              {viewer.isStaff && (
-                <Link
-                  href="/admin"
-                  className={cn(
-                    buttonVariants({ variant: "ghost" }),
-                    "h-10 rounded-full px-4",
-                  )}
-                >
-                  Panel
-                </Link>
-              )}
-              <Link
-                href="/account"
-                className={cn(
-                  buttonVariants({ variant: "ghost" }),
-                  "h-10 rounded-full px-4",
-                )}
-              >
-                Moje konto
-              </Link>
-              <form action={signOutAction}>
-                <button
-                  type="submit"
-                  className={cn(buttonVariants(), "h-10 rounded-full px-5")}
-                >
-                  Wyloguj się
-                </button>
-              </form>
-            </>
+          {viewer?.isStaff ? (
+            <Link
+              href="/admin"
+              className={cn(buttonVariants(), "h-10 rounded-full px-5")}
+            >
+              Panel pracownika
+            </Link>
+          ) : viewer ? (
+            <AccountMenu
+              label="Moje konto"
+              email={viewer.email}
+              items={[...ACCOUNT_LINKS, ...ACCOUNT_MENU_EXTRA_LINKS]}
+            />
           ) : (
             <>
               <Link

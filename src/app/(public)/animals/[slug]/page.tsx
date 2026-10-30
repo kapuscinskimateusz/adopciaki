@@ -129,13 +129,15 @@ export default async function AnimalProfilePage({
             <h1 className="font-heading text-4xl font-semibold tracking-tight sm:text-5xl">
               {animal.name}
             </h1>
-            <FavoriteButton
-              animalId={animal.id}
-              animalName={animal.name}
-              isFavorite={favoriteIds.has(animal.id)}
-              returnTo={`/animals/${animal.slug}`}
-              className="shrink-0"
-            />
+            {favoriteIds && (
+              <FavoriteButton
+                animalId={animal.id}
+                animalName={animal.name}
+                isFavorite={favoriteIds.has(animal.id)}
+                returnTo={`/animals/${animal.slug}`}
+                className="shrink-0"
+              />
+            )}
           </div>
 
           <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4">

@@ -3,14 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { safeRedirectPath } from "@/features/auth/redirect";
-import { requireCurrentUser } from "@/lib/supabase/auth";
+import { requireAdopter } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { toggleFavoriteSchema } from "./schema";
 
 export async function toggleFavoriteAction(formData: FormData) {
   const returnTo = safeRedirectPath(formData.get("returnTo")?.toString(), "/animals");
   // Gość trafia do logowania i wraca na stronę, z której kliknął serce.
-  const user = await requireCurrentUser(returnTo);
+  const user = await requireAdopter(returnTo);
 
   const parsed = toggleFavoriteSchema.safeParse({
     animalId: formData.get("animalId"),

@@ -7,7 +7,8 @@ import { signOutAction } from "@/features/auth/actions";
 import type { Viewer } from "@/lib/supabase/auth";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { NAV_LINKS } from "./nav-links";
+import { ACCOUNT_LINKS } from "@/features/account/account-links";
+import { ACCOUNT_MENU_EXTRA_LINKS, NAV_LINKS } from "./nav-links";
 
 export function MobileNav({ viewer }: { viewer: Viewer }) {
   const [open, setOpen] = useState(false);
@@ -43,43 +44,47 @@ export function MobileNav({ viewer }: { viewer: Viewer }) {
                 </a>
               </li>
             ))}
+            {viewer && !viewer.isStaff && (
+              <li className="border-border mt-2 border-t pt-3">
+                <p className="text-muted-foreground px-3 pb-1 text-xs font-semibold tracking-widest uppercase">
+                  Moje konto
+                </p>
+                <ul>
+                  {[...ACCOUNT_LINKS, ...ACCOUNT_MENU_EXTRA_LINKS].map((l) => (
+                    <li key={l.href}>
+                      <Link
+                        href={l.href}
+                        onClick={() => setOpen(false)}
+                        className="hover:bg-secondary block rounded-xl px-3 py-3 text-base font-medium"
+                      >
+                        {l.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            )}
             <li className="mt-2 flex gap-2">
-              {viewer ? (
-                <>
-                  {viewer.isStaff && (
-                    <Link
-                      href="/admin"
-                      onClick={() => setOpen(false)}
-                      className={cn(
-                        buttonVariants({ variant: "outline" }),
-                        "h-11 flex-1 rounded-full text-base",
-                      )}
-                    >
-                      Panel
-                    </Link>
-                  )}
-                  <Link
-                    href="/account"
-                    onClick={() => setOpen(false)}
+              {viewer?.isStaff ? (
+                <Link
+                  href="/admin"
+                  onClick={() => setOpen(false)}
+                  className={cn(buttonVariants(), "h-11 flex-1 rounded-full text-base")}
+                >
+                  Panel pracownika
+                </Link>
+              ) : viewer ? (
+                <form action={signOutAction} className="flex flex-1">
+                  <button
+                    type="submit"
                     className={cn(
                       buttonVariants({ variant: "outline" }),
                       "h-11 flex-1 rounded-full text-base",
                     )}
                   >
-                    Moje konto
-                  </Link>
-                  <form action={signOutAction} className="flex flex-1">
-                    <button
-                      type="submit"
-                      className={cn(
-                        buttonVariants(),
-                        "h-11 flex-1 rounded-full text-base",
-                      )}
-                    >
-                      Wyloguj się
-                    </button>
-                  </form>
-                </>
+                    Wyloguj się
+                  </button>
+                </form>
               ) : (
                 <>
                   <Link

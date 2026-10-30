@@ -7,7 +7,7 @@ import {
   animalSpecies,
 } from "@/features/admin/animals/schema";
 import { ANIMAL_PHOTO_BUCKET } from "@/features/admin/animals/photo-schema";
-import { getCurrentUser } from "@/lib/supabase/auth";
+import { getCurrentUser, getCurrentViewer } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import {
   CATALOG_PAGE_SIZE,
@@ -175,9 +175,12 @@ export async function getAnimalBySlug(slug: string): Promise<PublicAnimal | null
   return animal;
 }
 
-// Dla gościa zwraca pusty zbiór; RLS zawęża wynik do ulubionych zalogowanego.
-export async function getFavoriteIds(): Promise<Set<string>> {
+// Gość dostaje pusty zbiór (serduszko prowadzi do logowania), a staff null: ulubione
+// są funkcją konta adoptującego, więc serduszko się nie wyświetla.
+// RLS zawęża wynik do ulubionych zalogowanego.
+export async function getFavoriteIds(): Promise<Set<string> | null> {
   if (!(await getCurrentUser())) return new Set();
+  if ((await getCurrentViewer())?.isStaff) return null;
   const supabase = await createClient();
   const { data, error } = await supabase.from("favorites").select("animal_id");
   if (error) {

@@ -33,6 +33,21 @@ export async function requireCurrentUser(next = "/account") {
   return user;
 }
 
+// Rola zawsze z tabeli profiles (RLS), nigdy z user metadata.
+const getRole = cache(async (userId: string) => {
+  const supabase = await createClient();
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Nie udało się sprawdzić roli użytkownika: ${error.message}`);
+  }
+  return profile?.role === "staff" ? "staff" : "adopter";
+});
+
 export type Viewer = { email: string; isStaff: boolean } | null;
 
 // Dla nagłówka publicznego: awaria Supabase degraduje do widoku gościa zamiast psuć stronę.
@@ -41,14 +56,7 @@ export const getCurrentViewer = cache(async (): Promise<Viewer> => {
     const user = await getCurrentUser();
     if (!user) return null;
 
-    const supabase = await createClient();
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    return { email: user.email, isStaff: profile?.role === "staff" };
+    return { email: user.email, isStaff: (await getRole(user.id)) === "staff" };
   } catch {
     return null;
   }
@@ -56,20 +64,17 @@ export const getCurrentViewer = cache(async (): Promise<Viewer> => {
 
 export async function requireStaff(next = "/admin") {
   const user = await requireCurrentUser(next);
-  const supabase = await createClient();
-  const { data: profile, error } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (error) {
-    throw new Error(`Nie udało się sprawdzić roli użytkownika: ${error.message}`);
-  }
-
-  if (profile?.role !== "staff") {
+  if ((await getRole(user.id)) !== "staff") {
     redirect("/account");
   }
+  return user;
+}
 
+// Konto adoptującego (ankieta, ulubione) nie jest dostępne dla staff: staff pracuje w panelu.
+export async function requireAdopter(next = "/account") {
+  const user = await requireCurrentUser(next);
+  if ((await getRole(user.id)) === "staff") {
+    redirect("/admin");
+  }
   return user;
 }

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AnimalCard } from "@/features/animals/animal-card";
 import { getFavoriteAnimals } from "@/features/animals/data";
-import { requireCurrentUser } from "@/lib/supabase/auth";
+import { requireAdopter } from "@/lib/supabase/auth";
 
 export const metadata: Metadata = {
   title: "Ulubione",
@@ -10,8 +10,9 @@ export const metadata: Metadata = {
 };
 
 export default async function FavoritesPage() {
-  await requireCurrentUser("/account/favorites");
+  await requireAdopter("/account/favorites");
   const favorites = await getFavoriteAnimals();
+  const favoriteIds = new Set(favorites.map((animal) => animal.id));
 
   return (
     <section aria-labelledby="favorites-heading">
@@ -22,7 +23,11 @@ export default async function FavoritesPage() {
         <ul className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {favorites.map((animal) => (
             <li key={animal.id} className="flex flex-col [&>article]:flex-1">
-              <AnimalCard animal={animal} isFavorite returnTo="/account/favorites" />
+              <AnimalCard
+                animal={animal}
+                favoriteIds={favoriteIds}
+                returnTo="/account/favorites"
+              />
             </li>
           ))}
         </ul>

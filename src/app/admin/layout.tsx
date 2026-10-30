@@ -1,9 +1,12 @@
 import Link from "next/link";
+import { AccountMenu } from "@/components/layout/account-menu";
 import { Logo } from "@/components/layout/logo";
-import { Button } from "@/components/ui/button";
-import { signOutAction } from "@/features/auth/actions";
+import { getCurrentViewer } from "@/lib/supabase/auth";
 
-export default function AdminLayout({ children }: LayoutProps<"/admin">) {
+// Dostęp sprawdza każda strona panelu (requireStaff); layout tylko wyświetla menu.
+export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
+  const viewer = await getCurrentViewer();
+
   return (
     <div className="bg-background flex min-h-screen flex-col">
       <header className="border-border border-b">
@@ -14,19 +17,13 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
               Panel pracownika
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/"
-              className="text-muted-foreground hover:text-foreground hidden rounded-lg px-3 py-2 text-sm sm:inline-flex"
-            >
-              Strona publiczna
-            </Link>
-            <form action={signOutAction}>
-              <Button type="submit" variant="outline">
-                Wyloguj
-              </Button>
-            </form>
-          </div>
+          {viewer && (
+            <AccountMenu
+              label="Konto"
+              email={viewer.email}
+              items={[{ href: "/", label: "Zobacz stronę" }]}
+            />
+          )}
         </div>
       </header>
 

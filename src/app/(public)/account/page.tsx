@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowRight, ClipboardList, Heart } from "lucide-react";
 import { getFavoriteIds } from "@/features/animals/data";
 import { getOwnPreferences } from "@/features/preferences/data";
-import { requireCurrentUser } from "@/lib/supabase/auth";
+import { requireAdopter } from "@/lib/supabase/auth";
 
 export const metadata: Metadata = {
   title: "Moje konto",
@@ -21,11 +21,12 @@ function favoritesSummary(count: number) {
 }
 
 export default async function AccountPage() {
-  const user = await requireCurrentUser();
+  const user = await requireAdopter();
   const [preferences, favoriteIds] = await Promise.all([
     getOwnPreferences(),
     getFavoriteIds(),
   ]);
+  const favoriteCount = favoriteIds?.size ?? 0;
 
   const steps = [
     {
@@ -40,9 +41,9 @@ export default async function AccountPage() {
     {
       icon: Heart,
       title: "Ulubione",
-      text: favoritesSummary(favoriteIds.size),
-      href: favoriteIds.size > 0 ? "/account/favorites" : "/animals",
-      cta: favoriteIds.size > 0 ? "Zobacz ulubione" : "Przeglądaj zwierzaki",
+      text: favoritesSummary(favoriteCount),
+      href: favoriteCount > 0 ? "/account/favorites" : "/animals",
+      cta: favoriteCount > 0 ? "Zobacz ulubione" : "Przeglądaj zwierzaki",
     },
   ];
 

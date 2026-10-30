@@ -73,7 +73,7 @@ export default async function AnimalsPage({ searchParams }: PageProps<"/animals"
             <li key={animal.id} className="flex flex-col [&>article]:flex-1">
               <AnimalCard
                 animal={animal}
-                isFavorite={favoriteIds.has(animal.id)}
+                favoriteIds={favoriteIds}
                 returnTo={buildCatalogHref(params)}
               />
             </li>

@@ -32,11 +32,7 @@ export default async function HomePage() {
           <ul className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {featured.map((animal) => (
               <li key={animal.id} className="flex flex-col [&>article]:flex-1">
-                <AnimalCard
-                  animal={animal}
-                  isFavorite={favoriteIds.has(animal.id)}
-                  returnTo="/"
-                />
+                <AnimalCard animal={animal} favoriteIds={favoriteIds} returnTo="/" />
               </li>
             ))}
           </ul>

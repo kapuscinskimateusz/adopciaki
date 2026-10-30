@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireCurrentUser } from "@/lib/supabase/auth";
+import { requireAdopter } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { PreferencesFormState } from "./form-state";
 import { preferencesFields, preferencesFormSchema } from "./schema";
@@ -11,7 +11,7 @@ export async function savePreferencesAction(
   _previousState: PreferencesFormState,
   formData: FormData,
 ): Promise<PreferencesFormState> {
-  const user = await requireCurrentUser("/account/matches/survey");
+  const user = await requireAdopter("/account/matches/survey");
 
   const parsed = preferencesFormSchema.safeParse({
     preferred_species: formData.getAll("preferred_species"),

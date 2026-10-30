@@ -7,7 +7,7 @@ import { getFavoriteIds, getRecommendableAnimals } from "@/features/animals/data
 import { matchLevelLabel, rankAnimals } from "@/features/matching/engine";
 import { MatchReasons, MatchScore } from "@/features/matching/match-summary";
 import { getOwnPreferences } from "@/features/preferences/data";
-import { requireCurrentUser } from "@/lib/supabase/auth";
+import { requireAdopter } from "@/lib/supabase/auth";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 const linkClass = "text-primary underline-offset-4 hover:underline";
 
 export default async function MatchesPage() {
-  await requireCurrentUser("/account/matches");
+  await requireAdopter("/account/matches");
   const preferences = await getOwnPreferences();
 
   if (!preferences) {
@@ -80,7 +80,7 @@ export default async function MatchesPage() {
             <li key={animal.id} className="grid gap-5 sm:grid-cols-2 [&>article]:h-full">
               <AnimalCard
                 animal={animal}
-                isFavorite={favoriteIds.has(animal.id)}
+                favoriteIds={favoriteIds}
                 returnTo="/account/matches"
               />
               <div className="bg-card border-border rounded-3xl border p-5 sm:p-7">

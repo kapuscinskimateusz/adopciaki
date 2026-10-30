@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { getOwnPreferences } from "@/features/preferences/data";
 import { PreferencesForm } from "@/features/preferences/preferences-form";
-import { requireCurrentUser } from "@/lib/supabase/auth";
+import { requireAdopter } from "@/lib/supabase/auth";
 
 export const metadata: Metadata = {
   title: "Ankieta",
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function SurveyPage() {
-  await requireCurrentUser("/account/matches/survey");
+  await requireAdopter("/account/matches/survey");
   const preferences = await getOwnPreferences();
 
   return (
