@@ -5,17 +5,18 @@ Sekcje „Plan” opisują zamierzony stan. Sekcja [Status realizacji](#status-r
 
 ## Status realizacji
 
-Stan na 29.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` jest skonfigurowany, a lokalne połączenie zweryfikowane. CLI jest zalogowane i repo podlinkowane.
+Stan na 30.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` jest skonfigurowany, a lokalne połączenie zweryfikowane. CLI jest zalogowane i repo podlinkowane.
 
-| Etap         | Status                                                                                            |
-| ------------ | ------------------------------------------------------------------------------------------------- |
-| 0. Fundament | Gotowy; połączenie z Supabase Cloud dev zweryfikowane lokalnie                                    |
-| 1. Schemat   | Gotowy; profile, zwierzęta, zdjęcia i RLS wdrożone, testy integracyjne zdane                      |
-| 2. Auth      | Gotowy; implementacja i ręczne testy E2E przepływu e-mailowego potwierdzone przez użytkownika     |
-| 3. Panel     | Gotowy; zarządzanie zwierzętami i zdjęciami wdrożone do Supabase dev, ręczny test UI potwierdzony |
-| 4. Katalog   | Gotowy; dane z Supabase, filtry w URL, profil i galeria, ręczny test UI potwierdzony              |
-| 5. Ulubione  | Gotowy; migracja i testy RLS zdane, ręczny test UI potwierdzony                                   |
-| 6–9          | Nie rozpoczęte                                                                                    |
+| Etap           | Status                                                                                            |
+| -------------- | ------------------------------------------------------------------------------------------------- |
+| 0. Fundament   | Gotowy; połączenie z Supabase Cloud dev zweryfikowane lokalnie                                    |
+| 1. Schemat     | Gotowy; profile, zwierzęta, zdjęcia i RLS wdrożone, testy integracyjne zdane                      |
+| 2. Auth        | Gotowy; implementacja i ręczne testy E2E przepływu e-mailowego potwierdzone przez użytkownika     |
+| 3. Panel       | Gotowy; zarządzanie zwierzętami i zdjęciami wdrożone do Supabase dev, ręczny test UI potwierdzony |
+| 4. Katalog     | Gotowy; dane z Supabase, filtry w URL, profil i galeria, ręczny test UI potwierdzony              |
+| 5. Ulubione    | Gotowy; migracja i testy RLS zdane, ręczny test UI potwierdzony                                   |
+| 6. Dopasowanie | Zaimplementowany; migracje wdrożone, testy RLS i reguł zdane; czeka na ręczny test UI             |
+| 7–9            | Nie rozpoczęte                                                                                    |
 
 ### Etap 0 — wykonane i zweryfikowane
 
@@ -82,6 +83,15 @@ Stan na 29.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` jest skonf
 - Tabela `favorites` (`user_id`, `animal_id`, `created_at`, klucz główny `(user_id, animal_id)`) z RLS: użytkownik widzi, dodaje i usuwa wyłącznie własne wpisy; dodać można tylko zwierzę `published`; brak `update` i brak dostępu dla gościa. Wpis można usunąć także po cofnięciu publikacji zwierzęcia.
 - Serduszko (formularz z Server Action `toggleFavoriteAction`, walidacja Zod) na kartach i profilu; gość po kliknięciu trafia do logowania i wraca na tę samą stronę (ulubione nie jest dodawane automatycznie). Lista ulubionych (najnowsze pierwsze) jest w `/account`; niepublikowane zwierzęta znikają z niej dzięki RLS.
 - Świadomie pominięte: limit liczby ulubionych i rate limiting (etap 9). Profil adoptującego przeniesiono do etapu 7.
+
+### Etap 6 — ankieta i rekomendacje (zaimplementowany, czeka na ręczny test UI)
+
+- Migracja `20261030110000_add_animal_compatibility.sql` dodaje do `animals` pola zgodności (`boolean null`, `NULL` = nie wiadomo): dzieci, psy, koty, samotność, mieszkanie, wymóg doświadczenia. Staff ustawia je w formularzu panelu, profil publiczny pokazuje znane wartości.
+- Migracja `20261030111000_create_adopter_preferences.sql` tworzy ankietę (jeden wiersz na użytkownika) z enumami i RLS: właściciel ma pełny dostęp do swojego wiersza, staff tylko odczyt, gość brak dostępu. Obie migracje wdrożono do Supabase Cloud dev 30.10.2026.
+- Silnik reguł w `src/features/matching/engine.ts` (czysta funkcja) ma twarde wykluczenia przy znanym „nie”, ważony score 0–100 i powody po polsku. Reguły i wagi opisuje [ADR-0002](./adr/0002-matching-rules.md).
+- `/account/preferences` zawiera ankietę (Server Action z walidacją Zod), a `/account/recommendations` pokazuje ranking z wynikiem i uzasadnieniem. Wspólny layout konta ma nawigację. CTA „Wypełnij ankietę” na stronie głównej prowadzi do ankiety; gość trafia do logowania i wraca.
+- 80 testów (w tym nowe testy RLS preferencji i pól zgodności oraz testy reguł) przeszło 30.10.2026. Lint, typecheck, format check i build przechodzą.
+- Do zrobienia przez użytkownika: ręczny test UI (staff ustawia pola zgodności; adopter wypełnia ankietę i sprawdza ranking). Zwierzęta w Cloud dev mają pola zgodności puste, dopóki staff ich nie uzupełni.
 
 ### Podjęte decyzje
 

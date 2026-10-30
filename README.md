@@ -4,7 +4,7 @@ Platforma adopcyjna dla jednego schroniska: katalog zwierząt, konta adoptujący
 
 **Stack:** Next.js (App Router) · TypeScript · Tailwind CSS · shadcn/ui · Supabase (Postgres, Auth, Storage, RLS). Plan i status etapów: [docs/plan.md](docs/plan.md). Decyzje: [docs/adr](docs/adr).
 
-**Status:** Etapy 1 (schemat i RLS), 2 (Auth) i 3 (panel staff — zwierzęta i zdjęcia) są zakończone. Użytkownik potwierdził ręczne testy przepływu e-mailowego oraz pełny test panelu i zarządzania zdjęciami 29.10.2026. Wszystkie 53 testy, w tym integracyjne testy RLS na Supabase dev, przeszły 30.10.2026. Etap 4 (publiczny katalog z Supabase: filtry w URL, sortowanie, paginacja, profil i galeria) jest zakończony. Etap 5 (ulubione: tabela z RLS, serduszko na kartach i profilu, lista w `/account`) jest zakończony (ręczny test UI potwierdzony).
+**Status:** Etapy 1 (schemat i RLS), 2 (Auth) i 3 (panel staff — zwierzęta i zdjęcia) są zakończone. Użytkownik potwierdził ręczne testy przepływu e-mailowego oraz pełny test panelu i zarządzania zdjęciami 29.10.2026. Wszystkie 80 testów, w tym integracyjne testy RLS na Supabase dev, przeszło 30.10.2026. Etap 4 (publiczny katalog z Supabase: filtry w URL, sortowanie, paginacja, profil i galeria) jest zakończony. Etap 5 (ulubione: tabela z RLS, serduszko na kartach i profilu, lista w `/account`) jest zakończony (ręczny test UI potwierdzony). Etap 6 (ankieta preferencji i regułowe rekomendacje z uzasadnieniem, [ADR-0002](docs/adr/0002-matching-rules.md)) jest zaimplementowany i czeka na ręczny test UI.
 
 ## Uruchomienie
 
@@ -55,9 +55,13 @@ Konfigurację testów trzymaj w osobnym, ignorowanym przez Git pliku `.env.rls.l
 cp .env.rls.example .env.rls.local   # uzupełnij URL, klucz publiczny i dane trzech kont
 ```
 
-Testy nie czytają `.env.local`. Używaj wyłącznie projektu dev i nie dodawaj klucza `service_role`. Test uruchomisz przez `npm test`. Gdy `.env.rls.local` lub jego zmiennych brakuje, testy RLS są pomijane. Zestaw 53 testów, w tym integracyjne testy RLS, przeszedł na Supabase dev 30.10.2026. Test zwierząt i zdjęć wymaga wdrożonych migracji `create_animals`, `archive_animals_instead_of_deleting`, `add_animal_photo_storage` oraz `fix_animal_photo_storage_policies`. Testy sprawdzają widoczność opublikowanych zwierząt i metadanych zdjęć, staff-only zapis/zmianę/usuwanie plików Storage, publiczny odczyt obiektów, ograniczenie liczby zdjęć i kolejność. Testowe rekordy metadanych są usuwane, a testowe zwierzęta archiwizowane. Nie uruchamiaj `supabase db reset` na projekcie Cloud.
+Testy nie czytają `.env.local`. Używaj wyłącznie projektu dev i nie dodawaj klucza `service_role`. Test uruchomisz przez `npm test`. Gdy `.env.rls.local` lub jego zmiennych brakuje, testy RLS są pomijane. Zestaw 80 testów, w tym integracyjne testy RLS, przeszedł na Supabase dev 30.10.2026. Test zwierząt i zdjęć wymaga wdrożonych migracji `create_animals`, `archive_animals_instead_of_deleting`, `add_animal_photo_storage` oraz `fix_animal_photo_storage_policies`. Testy sprawdzają widoczność opublikowanych zwierząt i metadanych zdjęć, staff-only zapis/zmianę/usuwanie plików Storage, publiczny odczyt obiektów, ograniczenie liczby zdjęć i kolejność. Testowe rekordy metadanych są usuwane, a testowe zwierzęta archiwizowane. Nie uruchamiaj `supabase db reset` na projekcie Cloud.
 
 Przykładowe dane zwierząt są w `supabase/seed.sql` i są ładowane przez lokalne `supabase db reset`.
+
+## Ankieta i rekomendacje
+
+Zalogowany użytkownik wypełnia ankietę w `/account/preferences`. Na jej podstawie `/account/recommendations` pokazuje zwierzęta posortowane według dopasowania, z wynikiem i powodami („pasuje” lub „do omówienia”). Zwierzęta, które według schroniska nie pasują (np. nie dogadują się z dziećmi, gdy w domu są dzieci), są pomijane. Brak informacji nie wyklucza zwierzęcia, tylko dodaje temat do rozmowy. Wynik jest liczony na serwerze i nie jest zapisywany. Odpowiedzi z ankiety widzi właściciel i staff (RLS). Reguły i wagi opisuje [ADR-0002](docs/adr/0002-matching-rules.md).
 
 ## Panel pracownika
 
@@ -65,7 +69,7 @@ Personel używa tego samego formularza logowania co adoptujący. Po zalogowaniu 
 
 Widoczność linków i przekierowania służą nawigacji, nie autoryzacji. Każda strona i Server Action panelu weryfikuje rolę staff na serwerze, a dostęp do danych dodatkowo ogranicza RLS. Rejestracja publiczna zawsze tworzy rolę `adopter`.
 
-W edycji zwierzęcia staff może dodać do 10 zdjęć JPEG/PNG/WebP (maks. 5 MiB każde), ustawić ich kolejność i tekst alternatywny oraz usunąć zdjęcia. Nowe zwierzę po zapisie przechodzi do edycji, gdzie można dodać zdjęcia. Bucket `animal-photos` jest publiczny: sam plik jest dostępny dla każdego, kto zna jego URL, również przed publikacją zwierzęcia. Upload i usuwanie wymagają roli staff po stronie serwera i polityk Storage; metadane podlegają RLS. Migracje bucketu i polityk znajdują się w `supabase/migrations/`.
+W edycji zwierzęcia staff może dodać do 10 zdjęć JPEG/PNG/WebP (maks. 5 MiB każde), ustawić ich kolejność i tekst alternatywny oraz usunąć zdjęcia. Formularz zawiera też pola zgodności (tak / nie / nie wiadomo), z których korzystają rekomendacje. Nowe zwierzę po zapisie przechodzi do edycji, gdzie można dodać zdjęcia. Bucket `animal-photos` jest publiczny: sam plik jest dostępny dla każdego, kto zna jego URL, również przed publikacją zwierzęcia. Upload i usuwanie wymagają roli staff po stronie serwera i polityk Storage; metadane podlegają RLS. Migracje bucketu i polityk znajdują się w `supabase/migrations/`.
 
 ## Uwierzytelnianie
 
