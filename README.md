@@ -4,7 +4,7 @@ Platforma adopcyjna dla jednego schroniska: katalog zwierząt, konta adoptujący
 
 **Stack:** Next.js (App Router) · TypeScript · Tailwind CSS · shadcn/ui · Supabase (Postgres, Auth, Storage, RLS). Plan i status etapów: [docs/plan.md](docs/plan.md). Decyzje: [docs/adr](docs/adr).
 
-**Status:** Etapy 1 (schemat i RLS), 2 (Auth) i 3 (panel staff — zwierzęta i zdjęcia) są zakończone. Użytkownik potwierdził ręczne testy przepływu e-mailowego oraz pełny test panelu i zarządzania zdjęciami 29.10.2026. Wszystkie 46 testów, w tym integracyjne testy RLS na Supabase dev, przeszły. Etap 4 (publiczny katalog z Supabase: filtry w URL, sortowanie, paginacja, profil i galeria) jest zakończony. Etap 5 (ulubione: tabela z RLS, serduszko na kartach i profilu, lista w `/account`) jest zakończony (ręczny test UI potwierdzony).
+**Status:** Etapy 1 (schemat i RLS), 2 (Auth) i 3 (panel staff — zwierzęta i zdjęcia) są zakończone. Użytkownik potwierdził ręczne testy przepływu e-mailowego oraz pełny test panelu i zarządzania zdjęciami 29.10.2026. Wszystkie 53 testy, w tym integracyjne testy RLS na Supabase dev, przeszły 30.10.2026. Etap 4 (publiczny katalog z Supabase: filtry w URL, sortowanie, paginacja, profil i galeria) jest zakończony. Etap 5 (ulubione: tabela z RLS, serduszko na kartach i profilu, lista w `/account`) jest zakończony (ręczny test UI potwierdzony).
 
 ## Uruchomienie
 
@@ -55,7 +55,7 @@ Konfigurację testów trzymaj w osobnym, ignorowanym przez Git pliku `.env.rls.l
 cp .env.rls.example .env.rls.local   # uzupełnij URL, klucz publiczny i dane trzech kont
 ```
 
-Testy nie czytają `.env.local`. Używaj wyłącznie projektu dev i nie dodawaj klucza `service_role`. Test uruchomisz przez `npm test`. Gdy `.env.rls.local` lub jego zmiennych brakuje, testy RLS są pomijane. Zestaw 29 testów, w tym integracyjne testy RLS, przeszedł na Supabase dev 29.10.2026. Test zwierząt i zdjęć wymaga wdrożonych migracji `create_animals`, `archive_animals_instead_of_deleting`, `add_animal_photo_storage` oraz `fix_animal_photo_storage_policies`. Testy sprawdzają widoczność opublikowanych zwierząt i metadanych zdjęć, staff-only zapis/zmianę/usuwanie plików Storage, publiczny odczyt obiektów, ograniczenie liczby zdjęć i kolejność. Testowe rekordy metadanych są usuwane, a testowe zwierzęta archiwizowane. Nie uruchamiaj `supabase db reset` na projekcie Cloud.
+Testy nie czytają `.env.local`. Używaj wyłącznie projektu dev i nie dodawaj klucza `service_role`. Test uruchomisz przez `npm test`. Gdy `.env.rls.local` lub jego zmiennych brakuje, testy RLS są pomijane. Zestaw 53 testów, w tym integracyjne testy RLS, przeszedł na Supabase dev 30.10.2026. Test zwierząt i zdjęć wymaga wdrożonych migracji `create_animals`, `archive_animals_instead_of_deleting`, `add_animal_photo_storage` oraz `fix_animal_photo_storage_policies`. Testy sprawdzają widoczność opublikowanych zwierząt i metadanych zdjęć, staff-only zapis/zmianę/usuwanie plików Storage, publiczny odczyt obiektów, ograniczenie liczby zdjęć i kolejność. Testowe rekordy metadanych są usuwane, a testowe zwierzęta archiwizowane. Nie uruchamiaj `supabase db reset` na projekcie Cloud.
 
 Przykładowe dane zwierząt są w `supabase/seed.sql` i są ładowane przez lokalne `supabase db reset`.
 

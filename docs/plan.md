@@ -15,7 +15,7 @@ Stan na 29.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` jest skonf
 | 3. Panel     | Gotowy; zarządzanie zwierzętami i zdjęciami wdrożone do Supabase dev, ręczny test UI potwierdzony |
 | 4. Katalog   | Gotowy; dane z Supabase, filtry w URL, profil i galeria, ręczny test UI potwierdzony              |
 | 5. Ulubione  | Gotowy; migracja i testy RLS zdane, ręczny test UI potwierdzony                                   |
-| 5–9          | Nie rozpoczęte                                                                                    |
+| 6–9          | Nie rozpoczęte                                                                                    |
 
 ### Etap 0 — wykonane i zweryfikowane
 
