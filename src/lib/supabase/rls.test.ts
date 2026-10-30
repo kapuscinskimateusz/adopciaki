@@ -774,3 +774,150 @@ describe.skipIf(!testIsConfigured)("favorites row-level security", () => {
     expect(deleted).toEqual([{ animal_id: favoriteAnimalId }]);
   });
 });
+
+describe.skipIf(!testIsConfigured)("adopter preferences row-level security", () => {
+  const preferences = {
+    preferred_species: ["dog"],
+    preferred_sizes: ["medium"],
+    housing: "house_with_garden",
+    hours_alone: "under_4",
+    activity_level: 4,
+    children_at_home: "none",
+    has_dogs: false,
+    has_cats: true,
+    experience: "some",
+  };
+  let adopterA: TestUser;
+  let adopterB: TestUser;
+  let staff: TestUser;
+
+  async function clearPreferences() {
+    await Promise.all(
+      [adopterA, adopterB].map((user) =>
+        user.client.from("adopter_preferences").delete().eq("user_id", user.id),
+      ),
+    );
+  }
+
+  beforeAll(async () => {
+    [adopterA, adopterB, staff] = await Promise.all([
+      signIn(
+        required(adopterAEmail, "SUPABASE_RLS_ADOPTER_A_EMAIL"),
+        required(adopterAPassword, "SUPABASE_RLS_ADOPTER_A_PASSWORD"),
+      ),
+      signIn(
+        required(adopterBEmail, "SUPABASE_RLS_ADOPTER_B_EMAIL"),
+        required(adopterBPassword, "SUPABASE_RLS_ADOPTER_B_PASSWORD"),
+      ),
+      signIn(
+        required(staffEmail, "SUPABASE_RLS_STAFF_EMAIL"),
+        required(staffPassword, "SUPABASE_RLS_STAFF_PASSWORD"),
+      ),
+    ]);
+    // Wpisy z poprzednich przebiegów mogłyby zafałszować wyniki.
+    await clearPreferences();
+  });
+
+  afterAll(async () => {
+    if (!adopterA || !adopterB) return;
+    await clearPreferences();
+  });
+
+  it("does not let guests access preferences", async () => {
+    const anonymousClient = createTestClient(required(anonKey, "SUPABASE_RLS_ANON_KEY"));
+    const { error: selectError } = await anonymousClient
+      .from("adopter_preferences")
+      .select("user_id")
+      .limit(1);
+    const { error: insertError } = await anonymousClient
+      .from("adopter_preferences")
+      .insert(preferences);
+
+    expect(selectError).not.toBeNull();
+    expect(insertError).not.toBeNull();
+  });
+
+  it("lets an adopter save and update only their own preferences", async () => {
+    const { error: insertError } = await adopterA.client
+      .from("adopter_preferences")
+      .insert(preferences);
+    const { error: updateError } = await adopterA.client
+      .from("adopter_preferences")
+      .update({ activity_level: 2 })
+      .eq("user_id", adopterA.id);
+    const { data: own, error: ownError } = await adopterA.client
+      .from("adopter_preferences")
+      .select("user_id, activity_level");
+
+    expect(insertError).toBeNull();
+    expect(updateError).toBeNull();
+    expect(ownError).toBeNull();
+    expect(own).toEqual([{ user_id: adopterA.id, activity_level: 2 }]);
+  });
+
+  it("keeps preferences private from other adopters and blocks impersonation", async () => {
+    const { data: foreignView, error: foreignError } = await adopterB.client
+      .from("adopter_preferences")
+      .select("user_id");
+    const { data: foreignUpdated, error: foreignUpdateError } = await adopterB.client
+      .from("adopter_preferences")
+      .update({ activity_level: 5 })
+      .eq("user_id", adopterA.id)
+      .select("user_id");
+    const { data: foreignDeleted, error: foreignDeleteError } = await adopterB.client
+      .from("adopter_preferences")
+      .delete()
+      .eq("user_id", adopterA.id)
+      .select("user_id");
+    const { error: impersonationError } = await adopterB.client
+      .from("adopter_preferences")
+      .insert({ ...preferences, user_id: adopterA.id });
+    const { error: hijackError } = await adopterA.client
+      .from("adopter_preferences")
+      .update({ user_id: adopterB.id })
+      .eq("user_id", adopterA.id);
+
+    expect(foreignError).toBeNull();
+    expect(foreignView).toEqual([]);
+    expect(foreignUpdateError).toBeNull();
+    expect(foreignUpdated).toEqual([]);
+    expect(foreignDeleteError).toBeNull();
+    expect(foreignDeleted).toEqual([]);
+    expect(impersonationError).not.toBeNull();
+    expect(hijackError).not.toBeNull();
+  });
+
+  it("lets staff read but not modify adopter preferences", async () => {
+    const { data: staffView, error: staffError } = await staff.client
+      .from("adopter_preferences")
+      .select("user_id")
+      .eq("user_id", adopterA.id);
+    const { data: staffUpdated, error: staffUpdateError } = await staff.client
+      .from("adopter_preferences")
+      .update({ activity_level: 5 })
+      .eq("user_id", adopterA.id)
+      .select("user_id");
+    const { data: unchanged } = await adopterA.client
+      .from("adopter_preferences")
+      .select("activity_level")
+      .single();
+
+    expect(staffError).toBeNull();
+    expect(staffView).toEqual([{ user_id: adopterA.id }]);
+    expect(staffUpdateError).toBeNull();
+    expect(staffUpdated).toEqual([]);
+    expect(unchanged?.activity_level).toBe(2);
+  });
+
+  it("rejects invalid answers in the database", async () => {
+    const { error: noSpeciesError } = await adopterB.client
+      .from("adopter_preferences")
+      .insert({ ...preferences, preferred_species: [] });
+    const { error: activityError } = await adopterB.client
+      .from("adopter_preferences")
+      .insert({ ...preferences, activity_level: 6 });
+
+    expect(noSpeciesError).not.toBeNull();
+    expect(activityError).not.toBeNull();
+  });
+});
