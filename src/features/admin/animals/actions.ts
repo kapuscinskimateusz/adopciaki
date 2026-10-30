@@ -6,7 +6,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { requireStaff } from "@/lib/supabase/auth";
 import type { AnimalFormState } from "./form-state";
-import { animalFormSchema } from "./schema";
+import { animalCompatibilityFields, animalFormSchema } from "./schema";
 
 const animalIdSchema = z.uuid();
 
@@ -22,6 +22,9 @@ function parseAnimalForm(formData: FormData) {
     energy_level: formData.get("energy_level"),
     description: formData.get("description"),
     traits: formData.get("traits"),
+    ...Object.fromEntries(
+      animalCompatibilityFields.map((field) => [field, formData.get(field)]),
+    ),
     publication_status: formData.get("publication_status"),
     adoption_status: formData.get("adoption_status"),
   });

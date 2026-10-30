@@ -1,3 +1,4 @@
+import type { AnimalCompatibilityField } from "@/features/admin/animals/schema";
 import type { PublicAnimal } from "./data";
 
 export const SPECIES_LABEL: Record<PublicAnimal["species"], string> = {
@@ -22,6 +23,25 @@ export const ADOPTION_STATUS_LABEL: Record<PublicAnimal["adoption_status"], stri
   available: "Czeka na dom",
   meeting: "W trakcie poznawania",
   adopted: "Adoptowane",
+};
+
+// Publiczny opis znanych wartości zgodności; NULL nie jest pokazywany.
+export const COMPATIBILITY_LABEL: Record<
+  AnimalCompatibilityField,
+  { yes: string; no: string }
+> = {
+  good_with_children: { yes: "Dogaduje się z dziećmi", no: "Nie do domu z dziećmi" },
+  good_with_dogs: { yes: "Dogaduje się z psami", no: "Nie dogaduje się z psami" },
+  good_with_cats: { yes: "Dogaduje się z kotami", no: "Nie dogaduje się z kotami" },
+  can_stay_alone: { yes: "Spokojnie zostaje sam", no: "Nie lubi zostawać sam" },
+  suitable_for_apartment: {
+    yes: "Odnajdzie się w mieszkaniu",
+    no: "Potrzebuje domu zamiast mieszkania",
+  },
+  requires_experience: {
+    yes: "Dla doświadczonego opiekuna",
+    no: "Dobry wybór dla początkujących",
+  },
 };
 
 // Ilustracja zastępcza dla zwierząt bez zdjęć.

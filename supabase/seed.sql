@@ -10,6 +10,12 @@ insert into public.animals (
   energy_level,
   description,
   traits,
+  good_with_children,
+  good_with_dogs,
+  good_with_cats,
+  can_stay_alone,
+  suitable_for_apartment,
+  requires_experience,
   publication_status,
   adoption_status
 )
@@ -26,6 +32,12 @@ values
     4,
     'Uwielbia długie spacery i aportowanie. Z dziećmi dogaduje się świetnie.',
     array['Lubi dzieci', 'Aktywna'],
+    true,
+    true,
+    null,
+    false,
+    false,
+    false,
     'published',
     'available'
   ),
@@ -41,6 +53,12 @@ values
     3,
     'Ciekawski towarzysz kanapowy. Zna już swoje imię i przychodzi na zawołanie.',
     array['Domowy', 'Towarzyski'],
+    true,
+    null,
+    true,
+    true,
+    true,
+    false,
     'published',
     'available'
   ),
@@ -56,6 +74,12 @@ values
     2,
     'Spokojna i delikatna. Najlepiej odnajdzie się w cichym domu.',
     array['Spokojna', 'Cicha'],
+    false,
+    false,
+    null,
+    true,
+    true,
+    false,
     'published',
     'meeting'
   )
@@ -71,5 +95,11 @@ set
   energy_level = excluded.energy_level,
   description = excluded.description,
   traits = excluded.traits,
+  good_with_children = excluded.good_with_children,
+  good_with_dogs = excluded.good_with_dogs,
+  good_with_cats = excluded.good_with_cats,
+  can_stay_alone = excluded.can_stay_alone,
+  suitable_for_apartment = excluded.suitable_for_apartment,
+  requires_experience = excluded.requires_experience,
   publication_status = excluded.publication_status,
   adoption_status = excluded.adoption_status;

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { initialAnimalFormState, type AnimalFormAction } from "./form-state";
 import {
   animalAdoptionStatuses,
+  animalCompatibilityFields,
   animalPublicationStatuses,
   animalSexes,
   animalSizes,
@@ -14,6 +15,7 @@ import {
 } from "./schema";
 import {
   animalAdoptionStatusLabels,
+  animalCompatibilityLabels,
   animalPublicationStatusLabels,
   animalSexLabels,
   animalSizeLabels,
@@ -27,6 +29,12 @@ function fieldClass(invalid: boolean) {
   ]
     .filter(Boolean)
     .join(" ");
+}
+
+function toCompatibilityValue(value: boolean | null | undefined) {
+  if (value === true) return "yes";
+  if (value === false) return "no";
+  return "";
 }
 
 function FieldError({ id, error }: { id: string; error?: string[] }) {
@@ -272,6 +280,36 @@ export function AnimalForm({
         </p>
         <FieldError id="traits" error={errors?.traits} />
       </div>
+
+      <fieldset className="space-y-4">
+        <legend className="text-sm font-medium">Zgodność</legend>
+        <p className="text-muted-foreground text-xs">
+          Na tej podstawie działają rekomendacje. Wybierz „Nie wiadomo”, jeśli schronisko
+          nie ma pewności — adoptujący zobaczy wtedy temat do omówienia.
+        </p>
+        <div className="grid gap-5 sm:grid-cols-2">
+          {animalCompatibilityFields.map((field) => (
+            <div key={field} className="space-y-2">
+              <label htmlFor={field} className="text-sm font-medium">
+                {animalCompatibilityLabels[field]}
+              </label>
+              <select
+                id={field}
+                name={field}
+                defaultValue={toCompatibilityValue(animal?.[field])}
+                aria-invalid={Boolean(errors?.[field]?.length)}
+                aria-describedby={errors?.[field]?.length ? `${field}-error` : undefined}
+                className={fieldClass(Boolean(errors?.[field]?.length))}
+              >
+                <option value="">Nie wiadomo</option>
+                <option value="yes">Tak</option>
+                <option value="no">Nie</option>
+              </select>
+              <FieldError id={field} error={errors?.[field]} />
+            </div>
+          ))}
+        </div>
+      </fieldset>
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="space-y-2">

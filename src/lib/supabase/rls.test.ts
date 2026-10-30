@@ -541,6 +541,36 @@ describe.skipIf(!testIsConfigured)("profile row-level security", () => {
     expect(unchangedPhoto?.alt_text).toBe("Test photo for a published animal.");
   });
 
+  it("lets staff set compatibility attributes and denies adopters", async () => {
+    const { data: updated, error: staffError } = await staff.client
+      .from("animals")
+      .update({ good_with_children: true, can_stay_alone: false })
+      .eq("id", publishedAnimalId)
+      .select("good_with_children, can_stay_alone, good_with_cats")
+      .single();
+    const { data: adopterUpdated, error: adopterError } = await adopterA.client
+      .from("animals")
+      .update({ good_with_children: false })
+      .eq("id", publishedAnimalId)
+      .select("id");
+    const { data: publicView, error: readError } = await adopterA.client
+      .from("animals")
+      .select("good_with_children, can_stay_alone")
+      .eq("id", publishedAnimalId)
+      .single();
+
+    expect(staffError).toBeNull();
+    expect(updated).toEqual({
+      good_with_children: true,
+      can_stay_alone: false,
+      good_with_cats: null,
+    });
+    expect(adopterError).toBeNull();
+    expect(adopterUpdated).toEqual([]);
+    expect(readError).toBeNull();
+    expect(publicView).toEqual({ good_with_children: true, can_stay_alone: false });
+  });
+
   it("archives animals and prevents staff from physically deleting them", async () => {
     const { data: archivedAnimal, error: archiveError } = await staff.client
       .from("animals")

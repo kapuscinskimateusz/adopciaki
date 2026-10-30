@@ -1,4 +1,5 @@
 import type {
+  AnimalCompatibilityField,
   animalAdoptionStatuses,
   animalPublicationStatuses,
   animalSexes,
@@ -40,4 +41,13 @@ export const animalAdoptionStatusLabels: Record<
   available: "Dostępne",
   meeting: "W trakcie poznawania",
   adopted: "Adoptowane",
+};
+
+export const animalCompatibilityLabels: Record<AnimalCompatibilityField, string> = {
+  good_with_children: "Dogaduje się z dziećmi",
+  good_with_dogs: "Dogaduje się z psami",
+  good_with_cats: "Dogaduje się z kotami",
+  can_stay_alone: "Może zostawać sam w domu",
+  suitable_for_apartment: "Odnajdzie się w mieszkaniu",
+  requires_experience: "Wymaga doświadczonego opiekuna",
 };

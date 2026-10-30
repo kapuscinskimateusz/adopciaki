@@ -2,12 +2,15 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Check, X } from "lucide-react";
+import { animalCompatibilityFields } from "@/features/admin/animals/schema";
 import { AnimalArt } from "@/features/animals/animal-art";
 import { AnimalStatusBadge, EnergyMeter } from "@/features/animals/animal-card";
 import { formatAge } from "@/features/animals/catalog-query";
 import { getAnimalBySlug, getFavoriteIds } from "@/features/animals/data";
 import { FavoriteButton } from "@/features/favorites/favorite-button";
 import {
+  COMPATIBILITY_LABEL,
   FALLBACK_ART,
   SEX_LABEL,
   SIZE_LABEL,
@@ -57,6 +60,13 @@ export default async function AnimalProfilePage({
     ["Płeć", SEX_LABEL[animal.sex]],
     ["Rozmiar", SIZE_LABEL[animal.size]],
   ];
+  const compatibility = animalCompatibilityFields.flatMap((field) => {
+    const value = animal[field];
+    if (value === null) return [];
+    // Wymóg doświadczenia jest ograniczeniem, więc „tak” oznaczamy jak pozostałe „nie”.
+    const ok = field === "requires_experience" ? !value : value;
+    return [{ field, ok, text: COMPATIBILITY_LABEL[field][value ? "yes" : "no"] }];
+  });
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-10 sm:py-14">
@@ -151,6 +161,29 @@ export default async function AnimalProfilePage({
                   className="bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-sm font-medium"
                 >
                   {trait}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {compatibility.length > 0 && (
+            <ul className="mt-6 space-y-2" aria-label="Zgodność">
+              {compatibility.map(({ field, ok, text }) => (
+                <li key={field} className="flex items-center gap-2.5 text-sm">
+                  <span
+                    className={
+                      ok
+                        ? "bg-forest text-forest-foreground grid size-5 shrink-0 place-items-center rounded-full"
+                        : "bg-muted text-muted-foreground grid size-5 shrink-0 place-items-center rounded-full"
+                    }
+                  >
+                    {ok ? (
+                      <Check className="size-3.5" aria-hidden />
+                    ) : (
+                      <X className="size-3.5" aria-hidden />
+                    )}
+                  </span>
+                  {text}
                 </li>
               ))}
             </ul>

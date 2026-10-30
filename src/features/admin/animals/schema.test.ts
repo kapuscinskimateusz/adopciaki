@@ -12,6 +12,12 @@ const validAnimal = {
   energy_level: "4",
   description: "Szukamy dla niej odpowiedzialnego domu.",
   traits: "Aktywna\nLubi spacery",
+  good_with_children: "yes",
+  good_with_dogs: "no",
+  good_with_cats: "",
+  can_stay_alone: "",
+  suitable_for_apartment: "yes",
+  requires_experience: "no",
   publication_status: "draft",
   adoption_status: "available",
 };
@@ -59,6 +65,38 @@ describe("animal form validation", () => {
         slug: expect.any(Array),
         age_months: expect.any(Array),
         energy_level: expect.any(Array),
+      });
+    }
+  });
+
+  it("maps compatibility answers to booleans and unknown to null", () => {
+    const result = animalFormSchema.safeParse(validAnimal);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toMatchObject({
+        good_with_children: true,
+        good_with_dogs: false,
+        good_with_cats: null,
+        can_stay_alone: null,
+        suitable_for_apartment: true,
+        requires_experience: false,
+      });
+    }
+  });
+
+  it("rejects missing or unexpected compatibility answers", () => {
+    const result = animalFormSchema.safeParse({
+      ...validAnimal,
+      good_with_children: "maybe",
+      good_with_cats: null,
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.flatten().fieldErrors).toMatchObject({
+        good_with_children: expect.any(Array),
+        good_with_cats: expect.any(Array),
       });
     }
   });

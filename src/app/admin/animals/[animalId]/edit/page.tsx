@@ -29,7 +29,7 @@ export default async function EditAnimalPage({
   const { data, error } = await supabase
     .from("animals")
     .select(
-      "id, slug, name, species, breed, age_months, sex, size, energy_level, description, traits, publication_status, adoption_status, created_at, updated_at",
+      "id, slug, name, species, breed, age_months, sex, size, energy_level, description, traits, good_with_children, good_with_dogs, good_with_cats, can_stay_alone, suitable_for_apartment, requires_experience, publication_status, adoption_status, created_at, updated_at",
     )
     .eq("id", parsedId.data)
     .maybeSingle();

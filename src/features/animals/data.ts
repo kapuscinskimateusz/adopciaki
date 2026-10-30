@@ -33,6 +33,12 @@ const publicAnimalSchema = z.object({
   energy_level: z.number().int().min(1).max(5),
   description: z.string(),
   traits: z.array(z.string()),
+  good_with_children: z.boolean().nullable(),
+  good_with_dogs: z.boolean().nullable(),
+  good_with_cats: z.boolean().nullable(),
+  can_stay_alone: z.boolean().nullable(),
+  suitable_for_apartment: z.boolean().nullable(),
+  requires_experience: z.boolean().nullable(),
   adoption_status: z.enum(animalAdoptionStatuses),
   created_at: z.string(),
   animal_photos: z.array(photoSchema),
@@ -45,7 +51,7 @@ export type PublicAnimal = Omit<
 > & { photos: PublicPhoto[] };
 
 const ANIMAL_COLUMNS =
-  "id, slug, name, species, breed, age_months, sex, size, energy_level, description, traits, adoption_status, created_at, animal_photos(storage_path, alt_text, display_order)";
+  "id, slug, name, species, breed, age_months, sex, size, energy_level, description, traits, good_with_children, good_with_dogs, good_with_cats, can_stay_alone, suitable_for_apartment, requires_experience, adoption_status, created_at, animal_photos(storage_path, alt_text, display_order)";
 
 async function parseAnimals(rows: unknown[]): Promise<PublicAnimal[]> {
   const parsed = publicAnimalSchema.array().safeParse(rows);

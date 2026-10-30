@@ -5,6 +5,20 @@ export const animalSexes = ["male", "female", "unknown"] as const;
 export const animalSizes = ["small", "medium", "large"] as const;
 export const animalPublicationStatuses = ["draft", "published", "archived"] as const;
 export const animalAdoptionStatuses = ["available", "meeting", "adopted"] as const;
+export const animalCompatibilityFields = [
+  "good_with_children",
+  "good_with_dogs",
+  "good_with_cats",
+  "can_stay_alone",
+  "suitable_for_apartment",
+  "requires_experience",
+] as const;
+export type AnimalCompatibilityField = (typeof animalCompatibilityFields)[number];
+
+// Formularz przesyła "yes" / "no" / "" (nie wiadomo); baza przechowuje true / false / null.
+const compatibilitySchema = z
+  .enum(["yes", "no", ""], { error: "Wybierz tak, nie lub nie wiadomo." })
+  .transform((value) => (value === "" ? null : value === "yes"));
 
 const ageMonthsSchema = z.preprocess(
   (value) => {
@@ -83,6 +97,12 @@ export const animalFormSchema = z.object({
     .min(1, { error: "Dodaj krótki opis zwierzęcia." })
     .max(5000, { error: "Opis może mieć maksymalnie 5000 znaków." }),
   traits: traitsSchema,
+  good_with_children: compatibilitySchema,
+  good_with_dogs: compatibilitySchema,
+  good_with_cats: compatibilitySchema,
+  can_stay_alone: compatibilitySchema,
+  suitable_for_apartment: compatibilitySchema,
+  requires_experience: compatibilitySchema,
   publication_status: z.enum(animalPublicationStatuses, {
     error: "Wybierz status publikacji.",
   }),
@@ -106,6 +126,12 @@ export const animalRecordSchema = z.object({
   energy_level: z.number().int(),
   description: z.string(),
   traits: z.array(z.string()),
+  good_with_children: z.boolean().nullable(),
+  good_with_dogs: z.boolean().nullable(),
+  good_with_cats: z.boolean().nullable(),
+  can_stay_alone: z.boolean().nullable(),
+  suitable_for_apartment: z.boolean().nullable(),
+  requires_experience: z.boolean().nullable(),
   publication_status: z.enum(animalPublicationStatuses),
   adoption_status: z.enum(animalAdoptionStatuses),
   created_at: z.string(),
