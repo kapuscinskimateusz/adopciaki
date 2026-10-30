@@ -12,6 +12,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 - Język UI: polski. Kod, nazwy i commity: angielski.
 - Stack i decyzje: `docs/adr/`. Plan, etapy i status realizacji: `docs/plan.md`. Pracuj małymi pionowymi przyrostami.
+- Role, nawigacja, nazwy i treści UI: `docs/product.md`. Aktualizuj go przy każdej zmianie funkcji widocznej dla użytkownika; teksty opisują tylko to, co działa.
 - **Bezpieczeństwo:** uprawnienia egzekwuje baza (RLS), nie UI. Każda nowa tabela ma RLS i test RLS.
 - Nigdy nie umieszczaj sekretów w kodzie ani w repo; `SUPABASE_SERVICE_ROLE_KEY` tylko w kodzie z `server-only`, bez prefiksu `NEXT_PUBLIC_`.
 - Autoryzację na serwerze opieraj na `supabase.auth.getUser()`, nie `getSession()`.

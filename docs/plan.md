@@ -1,22 +1,23 @@
 # Adopciaki — plan projektu
 
-Dokument jest źródłem prawdy dla zakresu i kolejności prac. Decyzje technologiczne: [adr/0001-stack.md](./adr/0001-stack.md).
+Dokument jest źródłem prawdy dla zakresu i kolejności prac. Decyzje technologiczne: [adr/0001-stack.md](./adr/0001-stack.md). Role, nawigacja, nazwy i zasady treści UI: [product.md](./product.md).
 Sekcje „Plan” opisują zamierzony stan. Sekcja [Status realizacji](#status-realizacji) opisuje, co faktycznie wykonano i zweryfikowano.
 
 ## Status realizacji
 
 Stan na 30.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` jest skonfigurowany, a lokalne połączenie zweryfikowane. CLI jest zalogowane i repo podlinkowane.
 
-| Etap           | Status                                                                                            |
-| -------------- | ------------------------------------------------------------------------------------------------- |
-| 0. Fundament   | Gotowy; połączenie z Supabase Cloud dev zweryfikowane lokalnie                                    |
-| 1. Schemat     | Gotowy; profile, zwierzęta, zdjęcia i RLS wdrożone, testy integracyjne zdane                      |
-| 2. Auth        | Gotowy; implementacja i ręczne testy E2E przepływu e-mailowego potwierdzone przez użytkownika     |
-| 3. Panel       | Gotowy; zarządzanie zwierzętami i zdjęciami wdrożone do Supabase dev, ręczny test UI potwierdzony |
-| 4. Katalog     | Gotowy; dane z Supabase, filtry w URL, profil i galeria, ręczny test UI potwierdzony              |
-| 5. Ulubione    | Gotowy; migracja i testy RLS zdane, ręczny test UI potwierdzony                                   |
-| 6. Dopasowanie | Gotowy; migracje wdrożone, testy RLS i reguł zdane, ręczny test UI potwierdzony                   |
-| 7–9            | Nie rozpoczęte                                                                                    |
+| Etap            | Status                                                                                            |
+| --------------- | ------------------------------------------------------------------------------------------------- |
+| 0. Fundament    | Gotowy; połączenie z Supabase Cloud dev zweryfikowane lokalnie                                    |
+| 1. Schemat      | Gotowy; profile, zwierzęta, zdjęcia i RLS wdrożone, testy integracyjne zdane                      |
+| 2. Auth         | Gotowy; implementacja i ręczne testy E2E przepływu e-mailowego potwierdzone przez użytkownika     |
+| 3. Panel        | Gotowy; zarządzanie zwierzętami i zdjęciami wdrożone do Supabase dev, ręczny test UI potwierdzony |
+| 4. Katalog      | Gotowy; dane z Supabase, filtry w URL, profil i galeria, ręczny test UI potwierdzony              |
+| 5. Ulubione     | Gotowy; migracja i testy RLS zdane, ręczny test UI potwierdzony                                   |
+| 6. Dopasowanie  | Gotowy; migracje wdrożone, testy RLS i reguł zdane, ręczny test UI potwierdzony                   |
+| 6a. Porządki UX | W toku; koncepcja nawigacji i treści w [product.md](./product.md)                                 |
+| 7–9             | Nie rozpoczęte                                                                                    |
 
 ### Etap 0 — wykonane i zweryfikowane
 
@@ -114,6 +115,8 @@ Stan na 30.10.2026. Projekt Supabase Cloud dev istnieje, `.env.local` jest skonf
 Platforma jednego schroniska, która prowadzi od poznania zwierzęcia do odpowiedzialnej obsługi adopcji: publiczny katalog, konto adoptującego, rekomendacje regułowe, zgłoszenie ze statusami i panel pracownika. Supabase (Postgres + Auth + Storage + RLS). Budowa pionowymi przyrostami; bezpieczeństwo (RLS) i testy od pierwszego etapu.
 
 ### Mapa produktu i główne ścieżki
+
+Aktualna mapa tras, nawigacja per rola i zasady treści: [product.md](./product.md). Poniższy opis to pierwotne założenia.
 
 - **Publicznie:** strona główna i katalog (`/animals`) → profil zwierzęcia (`/animals/[slug]`) → rejestracja/logowanie, ulubione lub zgłoszenie adopcyjne. Katalog czyta dane z Supabase.
 - **Adopter:** `/account` jest przestrzenią konta; profil, ulubione, preferencje i zgłoszenia są dodawane przyrostowo.
