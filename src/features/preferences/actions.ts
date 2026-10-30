@@ -11,7 +11,7 @@ export async function savePreferencesAction(
   _previousState: PreferencesFormState,
   formData: FormData,
 ): Promise<PreferencesFormState> {
-  const user = await requireCurrentUser("/account/preferences");
+  const user = await requireCurrentUser("/account/matches/survey");
 
   const parsed = preferencesFormSchema.safeParse({
     preferred_species: formData.getAll("preferred_species"),
@@ -53,5 +53,5 @@ export async function savePreferencesAction(
   }
 
   revalidatePath("/account", "layout");
-  redirect("/account/recommendations");
+  redirect("/account/matches");
 }

@@ -58,7 +58,7 @@ export function MatchShowcase() {
           </ul>
 
           <Link
-            href="/account/preferences"
+            href="/account/matches/survey"
             className={cn(
               buttonVariants({ size: "lg" }),
               "bg-sun text-forest hover:bg-sun/90 mt-9 h-12 rounded-full px-7 text-base",

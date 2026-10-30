@@ -61,7 +61,7 @@ Przykładowe dane zwierząt są w `supabase/seed.sql` i są ładowane przez loka
 
 ## Ankieta i rekomendacje
 
-Zalogowany użytkownik wypełnia ankietę w `/account/preferences`. Na jej podstawie `/account/recommendations` pokazuje zwierzęta posortowane według dopasowania, z wynikiem i powodami („pasuje” lub „do omówienia”). Zwierzęta, które według schroniska nie pasują (np. nie dogadują się z dziećmi, gdy w domu są dzieci), są pomijane. Brak informacji nie wyklucza zwierzęcia, tylko dodaje temat do rozmowy. Wynik jest liczony na serwerze i nie jest zapisywany. Odpowiedzi z ankiety widzi właściciel i staff (RLS). Reguły i wagi opisuje [ADR-0002](docs/adr/0002-matching-rules.md).
+Zalogowany adoptujący wypełnia ankietę w `/account/matches/survey`. Na jej podstawie zakładka „Dopasowania” (`/account/matches`) pokazuje zwierzęta posortowane według dopasowania, z wynikiem i powodami („pasuje” lub „do omówienia”). Zwierzęta, które według schroniska nie pasują (np. nie dogadują się z dziećmi, gdy w domu są dzieci), są pomijane. Brak informacji nie wyklucza zwierzęcia, tylko dodaje temat do rozmowy. Wynik jest liczony na serwerze i nie jest zapisywany. Odpowiedzi z ankiety widzi właściciel i staff (RLS). Reguły i wagi opisuje [ADR-0002](docs/adr/0002-matching-rules.md).
 
 ## Panel pracownika
 

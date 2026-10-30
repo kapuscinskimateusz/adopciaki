@@ -1,26 +1,32 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { getOwnPreferences } from "@/features/preferences/data";
 import { PreferencesForm } from "@/features/preferences/preferences-form";
 import { requireCurrentUser } from "@/lib/supabase/auth";
 
 export const metadata: Metadata = {
-  title: "Ankieta preferencji",
+  title: "Ankieta",
   robots: { index: false },
 };
 
-export default async function PreferencesPage() {
-  await requireCurrentUser("/account/preferences");
+export default async function SurveyPage() {
+  await requireCurrentUser("/account/matches/survey");
   const preferences = await getOwnPreferences();
 
   return (
-    <section className="bg-card border-border mt-8 rounded-3xl border p-6 sm:p-10">
-      <p className="text-primary text-sm font-semibold tracking-widest uppercase">
-        Ankieta preferencji
-      </p>
-      <h1 className="font-heading mt-3 text-3xl font-semibold tracking-tight">
+    <section className="bg-card border-border rounded-3xl border p-6 sm:p-10">
+      {preferences && (
+        <Link
+          href="/account/matches"
+          className="text-muted-foreground hover:text-foreground text-sm"
+        >
+          ← Wróć do dopasowań
+        </Link>
+      )}
+      <h2 className="font-heading mt-2 text-2xl font-semibold">
         Opowiedz nam o swoim domu
-      </h1>
+      </h2>
       <p className="text-muted-foreground mt-3 max-w-2xl">
         Na podstawie odpowiedzi pokażemy zwierzaki, które mogą do Ciebie pasować, i
         wyjaśnimy dlaczego. Odpowiedzi możesz zmienić w każdej chwili.
