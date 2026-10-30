@@ -4,7 +4,7 @@ Platforma adopcyjna dla jednego schroniska: katalog zwierząt, konta adoptujący
 
 **Stack:** Next.js (App Router) · TypeScript · Tailwind CSS · shadcn/ui · Supabase (Postgres, Auth, Storage, RLS). Plan i status etapów: [docs/plan.md](docs/plan.md). Decyzje: [docs/adr](docs/adr).
 
-**Status:** Etapy 1 (schemat i RLS), 2 (Auth) i 3 (panel staff — zwierzęta i zdjęcia) są zakończone. Użytkownik potwierdził ręczne testy przepływu e-mailowego oraz pełny test panelu i zarządzania zdjęciami 29.10.2026. Wszystkie 80 testów, w tym integracyjne testy RLS na Supabase dev, przeszło 30.10.2026. Etap 4 (publiczny katalog z Supabase: filtry w URL, sortowanie, paginacja, profil i galeria) jest zakończony. Etap 5 (ulubione: tabela z RLS, serduszko na kartach i profilu, lista w `/account`) jest zakończony (ręczny test UI potwierdzony). Etap 6 (ankieta preferencji i regułowe rekomendacje z uzasadnieniem, [ADR-0002](docs/adr/0002-matching-rules.md)) jest zaimplementowany i czeka na ręczny test UI.
+**Status:** Etapy 1 (schemat i RLS), 2 (Auth) i 3 (panel staff — zwierzęta i zdjęcia) są zakończone. Użytkownik potwierdził ręczne testy przepływu e-mailowego oraz pełny test panelu i zarządzania zdjęciami 29.10.2026. Wszystkie 80 testów, w tym integracyjne testy RLS na Supabase dev, przeszło 30.10.2026. Etap 4 (publiczny katalog z Supabase: filtry w URL, sortowanie, paginacja, profil i galeria) jest zakończony. Etap 5 (ulubione: tabela z RLS, serduszko na kartach i profilu, lista w `/account`) jest zakończony (ręczny test UI potwierdzony). Etap 6 (ankieta preferencji i regułowe rekomendacje z uzasadnieniem, [ADR-0002](docs/adr/0002-matching-rules.md)) jest zakończony (ręczny test UI potwierdzony).
 
 ## Uruchomienie
 
