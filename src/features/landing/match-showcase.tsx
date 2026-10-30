@@ -1,7 +1,10 @@
-import { ArrowRight, Check, Info, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Check, ShieldCheck } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { AnimalArt } from "@/features/animals/animal-art";
 import { sampleAnimals } from "@/features/animals/sample-animals";
+import type { MatchReason } from "@/features/matching/engine";
+import { MatchReasons, MatchScore } from "@/features/matching/match-summary";
 import { cn } from "@/lib/utils";
 
 const PRINCIPLES = [
@@ -10,11 +13,14 @@ const PRINCIPLES = [
   "Wynik to podpowiedź. Decyzję zawsze podejmuje człowiek.",
 ];
 
-const REASONS = [
-  { ok: true, text: "Masz doświadczenie z aktywnymi psami" },
-  { ok: true, text: "Deklarujesz ponad 2 godziny spacerów dziennie" },
-  { ok: true, text: "Mieszkasz w domu z ogrodem" },
-  { ok: false, text: "Fasola nie lubi zostawać sama — warto omówić Twój plan dnia" },
+const REASONS: MatchReason[] = [
+  { kind: "match", text: "Masz doświadczenie z aktywnymi psami" },
+  { kind: "match", text: "Deklarujesz ponad 2 godziny spacerów dziennie" },
+  { kind: "match", text: "Mieszkasz w domu z ogrodem" },
+  {
+    kind: "warning",
+    text: "Fasola nie lubi zostawać sama — warto omówić Twój plan dnia",
+  },
 ];
 
 export function MatchShowcase() {
@@ -51,8 +57,8 @@ export function MatchShowcase() {
             ))}
           </ul>
 
-          <a
-            href="#konto"
+          <Link
+            href="/account/preferences"
             className={cn(
               buttonVariants({ size: "lg" }),
               "bg-sun text-forest hover:bg-sun/90 mt-9 h-12 rounded-full px-7 text-base",
@@ -60,7 +66,7 @@ export function MatchShowcase() {
           >
             Wypełnij ankietę
             <ArrowRight className="size-4" />
-          </a>
+          </Link>
         </div>
 
         <div className="relative min-w-0 lg:rotate-[1.5deg]">
@@ -83,44 +89,14 @@ export function MatchShowcase() {
                 </p>
                 <p className="font-heading text-2xl font-semibold">Fasola</p>
               </div>
-              <div
-                role="img"
-                aria-label="Dopasowanie: 92 procent"
-                className="grid size-14 shrink-0 place-items-center rounded-full sm:size-16"
-                style={{
-                  background:
-                    "conic-gradient(var(--primary) 0 92%, var(--border) 92% 100%)",
-                }}
-              >
-                <span className="bg-card font-heading grid size-10 place-items-center rounded-full text-base font-semibold sm:size-12 sm:text-lg">
-                  92%
-                </span>
-              </div>
+              <MatchScore score={92} />
             </div>
 
             <p className="bg-sage/60 mt-5 rounded-xl px-4 py-2.5 text-sm font-semibold">
               Dopasowanie wysokie, ponieważ…
             </p>
 
-            <ul className="mt-4 space-y-2.5 sm:space-y-3">
-              {REASONS.map((r) => (
-                <li key={r.text} className="flex gap-3 text-sm leading-snug">
-                  <span
-                    className={cn(
-                      "mt-0.5 grid size-5 shrink-0 place-items-center rounded-full",
-                      r.ok ? "bg-forest text-forest-foreground" : "bg-sun text-forest",
-                    )}
-                  >
-                    {r.ok ? (
-                      <Check className="size-3.5" aria-hidden />
-                    ) : (
-                      <Info className="size-3.5" aria-hidden />
-                    )}
-                  </span>
-                  <span>{r.text}</span>
-                </li>
-              ))}
-            </ul>
+            <MatchReasons reasons={REASONS} className="mt-4" />
 
             <p className="text-muted-foreground border-border mt-6 flex items-center gap-2 border-t pt-4 text-xs">
               <ShieldCheck className="size-4 shrink-0" aria-hidden />

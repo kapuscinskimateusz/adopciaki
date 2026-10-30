@@ -212,3 +212,21 @@ export async function getFavoriteAnimals(): Promise<PublicAnimal[]> {
   const animals = await parseAnimals(data ?? []);
   return animals.sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id));
 }
+
+// Kandydaci do rekomendacji: wszystkie opublikowane, jeszcze nieadoptowane zwierzęta.
+// Schronisko ma ich dziesiątki, więc ranking liczymy w pamięci po stronie serwera.
+export async function getRecommendableAnimals(): Promise<PublicAnimal[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("animals")
+    .select(ANIMAL_COLUMNS)
+    .eq("publication_status", "published")
+    .neq("adoption_status", "adopted")
+    .order("created_at", { ascending: false })
+    .limit(500);
+
+  if (error) {
+    throw new Error(`Nie udało się pobrać zwierząt do rekomendacji: ${error.message}`);
+  }
+  return parseAnimals(data ?? []);
+}

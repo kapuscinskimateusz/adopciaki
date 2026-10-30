@@ -1,26 +1,22 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Logo } from "@/components/layout/logo";
+import { ArrowRight } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
 import { AnimalCard } from "@/features/animals/animal-card";
 import { getFavoriteAnimals } from "@/features/animals/data";
-import { signOutAction } from "@/features/auth/actions";
+import { getOwnPreferences } from "@/features/preferences/data";
 import { requireCurrentUser } from "@/lib/supabase/auth";
+import { cn } from "@/lib/utils";
 
 export default async function AccountPage() {
   const user = await requireCurrentUser();
-  const favorites = await getFavoriteAnimals();
+  const [favorites, preferences] = await Promise.all([
+    getFavoriteAnimals(),
+    getOwnPreferences(),
+  ]);
 
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 px-5 py-10 sm:py-16">
-      <div className="flex items-center justify-between">
-        <Logo />
-        <form action={signOutAction}>
-          <Button type="submit" variant="outline" className="rounded-full">
-            Wyloguj się
-          </Button>
-        </form>
-      </div>
-      <section className="bg-card border-border mt-10 rounded-3xl border p-6 sm:mt-16 sm:p-10">
+    <>
+      <section className="bg-card border-border mt-8 rounded-3xl border p-6 sm:p-10">
         <p className="text-primary text-sm font-semibold tracking-widest uppercase">
           Twoje konto
         </p>
@@ -30,15 +26,31 @@ export default async function AccountPage() {
         <p className="text-muted-foreground mt-3">
           Zalogowano jako <strong className="text-foreground">{user.email}</strong>.
         </p>
-        <p className="text-muted-foreground mt-6 text-sm">
-          Funkcje profilu pojawią się w kolejnych etapach projektu.
+        <p className="text-muted-foreground mt-6">
+          {preferences
+            ? "Twoja ankieta jest zapisana. Zobacz zwierzaki, które mogą do Ciebie pasować."
+            : "Odpowiedz na kilka pytań, a pokażemy zwierzaki, które mogą do Ciebie pasować."}
         </p>
-        <Link
-          href="/"
-          className="text-primary mt-6 inline-block text-sm underline-offset-4 hover:underline"
-        >
-          Wróć do katalogu zwierząt
-        </Link>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link
+            href={preferences ? "/account/recommendations" : "/account/preferences"}
+            className={cn(buttonVariants(), "h-11 rounded-full px-6")}
+          >
+            {preferences ? "Zobacz dopasowania" : "Wypełnij ankietę"}
+            <ArrowRight className="size-4" />
+          </Link>
+          {preferences && (
+            <Link
+              href="/account/preferences"
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                "h-11 rounded-full px-6",
+              )}
+            >
+              Zmień odpowiedzi
+            </Link>
+          )}
+        </div>
       </section>
 
       <section className="mt-10" aria-labelledby="favorites-heading">
@@ -66,6 +78,6 @@ export default async function AccountPage() {
           </p>
         )}
       </section>
-    </main>
+    </>
   );
 }

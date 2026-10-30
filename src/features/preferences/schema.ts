@@ -44,6 +44,9 @@ export const preferencesFormSchema = z.object({
 });
 
 export type PreferencesFormField = keyof z.input<typeof preferencesFormSchema>;
+export const preferencesFields = Object.keys(
+  preferencesFormSchema.shape,
+) as PreferencesFormField[];
 
 export const adopterPreferencesSchema = z.object({
   preferred_species: z.array(z.enum(animalSpecies)).min(1),
